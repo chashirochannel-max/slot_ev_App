@@ -75,6 +75,7 @@ class EVLookupConfig(BaseModel):
 class MachineProfile(BaseModel):
     id: str
     name: str
+    header_image: Optional[str] = None  # assets/配下の画像への相対パス。光さんが自分で用意したものを置く
     axes: list[Axis]
     derived: list[DerivedVar] = Field(default_factory=list)
     ev_lookup: Optional[EVLookupConfig] = None
@@ -88,12 +89,21 @@ class MachineProfile(BaseModel):
     @model_validator(mode="after")
     def _validate_expressions(self) -> "MachineProfile":
         known_names: set[str] = {axis.key for axis in self.axes}
-        axis_keys = set(known_names)
 
         for axis in self.axes:
             if axis.condition:
                 _check_expr(axis.condition, known_names, context=f"axis '{axis.key}'.condition")
 
+        for derived in self.derived:
+            _check_expr(derived.expr, known_names, context=f"derived '{derived.key}'.expr")
+            if derived.key in known_names:
+                raise ProfileValidationError(
+                    f"derived key '{derived.key}' collides with an existing axis or derived key"
+                )
+            known_names = known_names | {derived.key}
+
+        # ev_lookupはderivedの後(rulesの前)に評価される(engine/rules.py参照)ため、
+        # 参照先はaxesだけでなくderivedで定義した値でもよい。
         if self.ev_lookup is not None:
             cfg = self.ev_lookup
             for axis_ref, field_name in (
@@ -102,9 +112,9 @@ class MachineProfile(BaseModel):
                 (cfg.cycle_axis, "cycle_axis"),
                 (cfg.game_count_axis, "game_count_axis"),
             ):
-                if axis_ref not in axis_keys:
+                if axis_ref not in known_names:
                     raise ProfileValidationError(
-                        f"ev_lookup.{field_name} references undefined axis '{axis_ref}'"
+                        f"ev_lookup.{field_name} references undefined name '{axis_ref}'"
                     )
             if cfg.table_select_true not in self.tables or cfg.table_select_false not in self.tables:
                 raise ProfileValidationError(
@@ -115,14 +125,6 @@ class MachineProfile(BaseModel):
                     f"ev_lookup.result_key '{cfg.result_key}' collides with an existing axis key"
                 )
             known_names = known_names | {cfg.result_key}
-
-        for derived in self.derived:
-            _check_expr(derived.expr, known_names, context=f"derived '{derived.key}'.expr")
-            if derived.key in known_names:
-                raise ProfileValidationError(
-                    f"derived key '{derived.key}' collides with an existing axis or derived key"
-                )
-            known_names = known_names | {derived.key}
 
         for rule in self.rules:
             _check_expr(rule.condition, known_names, context=f"rule '{rule.id}'.condition")

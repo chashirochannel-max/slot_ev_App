@@ -28,11 +28,11 @@ class JudgementResult:
 def evaluate(profile: MachineProfile, axis_values: dict[str, Any]) -> JudgementResult:
     names: dict[str, Any] = dict(axis_values)
 
-    if profile.ev_lookup is not None:
-        names[profile.ev_lookup.result_key] = _lookup_ev(profile, names)
-
     for derived in profile.derived:
         names[derived.key] = simple_eval(derived.expr, names=names, functions=SIMPLEEVAL_FUNCTIONS)
+
+    if profile.ev_lookup is not None:
+        names[profile.ev_lookup.result_key] = _lookup_ev(profile, names)
 
     for rule in profile.rules:
         if simple_eval(rule.condition, names=names, functions=SIMPLEEVAL_FUNCTIONS):

@@ -14,6 +14,7 @@ from engine.profile_loader import ProfileValidationError, load_all_profiles
 from engine.rules import evaluate
 from services.sheets_log import SheetsLogError, append_log, pending_count, record_outcome, retry_pending
 from ui.forms import render_form
+from ui.picker import get_selected_profile, render_header_image, render_machine_picker
 from ui.result_view import render_ev, render_result
 
 PROFILES_DIR = Path(__file__).parent / "profiles"
@@ -79,12 +80,18 @@ def main() -> None:
         return
 
     if len(profiles) > 1:
-        names = [p.name for p in profiles]
-        selected_name = st.selectbox("機種を選択", names)
-        profile = next(p for p in profiles if p.name == selected_name)
+        profile = get_selected_profile(profiles)
+        if profile is None:
+            render_machine_picker(profiles)
+            return
+        if st.button("← 機種を変更"):
+            del st.session_state["selected_profile_id"]
+            st.rerun()
     else:
         profile = profiles[0]
-        st.subheader(profile.name)
+
+    render_header_image(profile)
+    st.subheader(profile.name)
 
     axis_values = render_form(profile)
 

@@ -59,6 +59,10 @@ git push -u origin main
 3. デプロイ後、アプリの「Settings」→「Secrets」に `.streamlit/secrets.toml` と同じ内容を貼り付ける(このファイル自体はGitHubにはpushされていない)
 4. 発行されたURLをiPhoneのブラウザのホーム画面に追加しておくと、ホールでワンタップでアクセスできる
 
-## 新機種の追加方法(v2以降)
+## 新機種の追加方法
 
-`profiles/` に新しいYAMLファイルを追加するだけでよい。`axes`(入力項目)・`derived`(派生変数)・`rules`(判定条件)を機種ごとに定義すれば、エンジン(`engine/rules.py`)・UI(`ui/forms.py`)・ログ機構(`services/sheets_log.py`)のコードは変更不要。
+`profiles/` に新しいYAMLファイルを追加するだけでよい。`axes`(入力項目)・`derived`(派生変数)・`ev_lookup`/`tables`(期待値テーブル参照)・`rules`(判定条件)を機種ごとに定義すれば、エンジン(`engine/rules.py`)・UI(`ui/forms.py`)・ログ機構(`services/sheets_log.py`)のコードは変更不要。機種が2つ以上になると、起動時に機種選択のカード画面が自動で表示される。
+
+## ヘッダー画像について
+
+機種選択画面・判定画面の上部に画像を出したい場合、`assets/` フォルダに自分で用意した画像ファイル(自撮りの筐体写真など、著作権的に問題のないもの)を置き、該当する `profiles/*.yaml` の `header_image` に相対パス(例: `assets/monkey_turn_v.jpg`)を設定する。メーカーの版権キャラクターアート等をネットから拾って使うのは著作権上避けること。
