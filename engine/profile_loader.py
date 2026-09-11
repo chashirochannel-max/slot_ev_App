@@ -58,25 +58,63 @@ class Rule(BaseModel):
     reason: str = ""
 
 
+class EVLookupConfig(BaseModel):
+    """期待値テーブル参照の設定。テーブルの実データ(tables)は機種ごとに異なるが、
+    参照ロジック自体(どの軸でテーブルを選び、どの軸で行を引き、結果をどの名前で
+    公開するか)は機種非依存の汎用機構としてengine側に実装する。"""
+
+    table_select_axis: str  # boolean軸。値によってtable_select_true/falseのどちらのテーブル群を使うか選ぶ
+    table_select_true: str
+    table_select_false: str
+    rate_axis: str  # tables[group]のキー(交換レート等)を選ぶ軸
+    cycle_axis: str  # テーブル行の整数キー(周期数など)
+    game_count_axis: str  # テーブル行の連続値キー(ゲーム数など)。行間は線形補間する
+    result_key: str = "ev_yen"  # 参照結果をnamesに公開する名前。derived/rulesから参照できる
+
+
 class MachineProfile(BaseModel):
     id: str
     name: str
-    rate_default: float
     axes: list[Axis]
     derived: list[DerivedVar] = Field(default_factory=list)
+    ev_lookup: Optional[EVLookupConfig] = None
+    # tables[group][rate_key] = [(game_count, cycle, ev_yen), ...]
+    tables: dict[str, dict[str, list[tuple[float, int, float]]]] = Field(default_factory=dict)
     rules: list[Rule]
     default_result: str
     default_reason: str = ""
-    avg_at_payout_medals: Optional[float] = None
     notes: Optional[str] = None
 
     @model_validator(mode="after")
     def _validate_expressions(self) -> "MachineProfile":
         known_names: set[str] = {axis.key for axis in self.axes}
+        axis_keys = set(known_names)
 
         for axis in self.axes:
             if axis.condition:
                 _check_expr(axis.condition, known_names, context=f"axis '{axis.key}'.condition")
+
+        if self.ev_lookup is not None:
+            cfg = self.ev_lookup
+            for axis_ref, field_name in (
+                (cfg.table_select_axis, "table_select_axis"),
+                (cfg.rate_axis, "rate_axis"),
+                (cfg.cycle_axis, "cycle_axis"),
+                (cfg.game_count_axis, "game_count_axis"),
+            ):
+                if axis_ref not in axis_keys:
+                    raise ProfileValidationError(
+                        f"ev_lookup.{field_name} references undefined axis '{axis_ref}'"
+                    )
+            if cfg.table_select_true not in self.tables or cfg.table_select_false not in self.tables:
+                raise ProfileValidationError(
+                    "ev_lookup.table_select_true/false must both be keys of `tables`"
+                )
+            if cfg.result_key in known_names:
+                raise ProfileValidationError(
+                    f"ev_lookup.result_key '{cfg.result_key}' collides with an existing axis key"
+                )
+            known_names = known_names | {cfg.result_key}
 
         for derived in self.derived:
             _check_expr(derived.expr, known_names, context=f"derived '{derived.key}'.expr")

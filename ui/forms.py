@@ -56,6 +56,7 @@ def _render_axis_input(axis: Axis) -> Any:
 
     if axis.type == "enum":
         options = axis.options or []
-        return st.selectbox(axis.label, options, key=axis.key)
+        default_index = options.index(axis.default) if axis.default in options else 0
+        return st.selectbox(axis.label, options, index=default_index, key=axis.key)
 
     raise ValueError(f"unsupported axis type: {axis.type}")

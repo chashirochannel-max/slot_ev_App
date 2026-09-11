@@ -14,7 +14,7 @@ from engine.profile_loader import ProfileValidationError, load_all_profiles
 from engine.rules import evaluate
 from services.sheets_log import SheetsLogError, append_log, pending_count, record_outcome, retry_pending
 from ui.forms import render_form
-from ui.result_view import render_payout_estimate, render_result
+from ui.result_view import render_ev, render_result
 
 PROFILES_DIR = Path(__file__).parent / "profiles"
 DISCLAIMER = "本ツールは情報整理を目的とし、実際の遊技判断は自己責任で行ってください。"
@@ -92,9 +92,8 @@ def main() -> None:
         judgement = evaluate(profile, axis_values)
         render_result(judgement)
 
-        bet_rate = axis_values.get("bet_rate") or profile.rate_default
         investment_yen = st.number_input("現在の投資額(円・任意)", min_value=0.0, step=100.0)
-        render_payout_estimate(profile, bet_rate, investment_yen)
+        render_ev(judgement, investment_yen)
 
         try:
             log_id = append_log(profile.id, axis_values, judgement.result, judgement.rule_id)
