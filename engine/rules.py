@@ -11,10 +11,10 @@ from typing import Any, Optional
 
 from simpleeval import simple_eval
 
-from engine.profile_loader import MachineProfile
+from engine.profile_loader import EVLookupConfig, MachineProfile
 
 # profile_loader.ALLOWED_FUNCTIONS と対になる実装。
-SIMPLEEVAL_FUNCTIONS = {"defined": lambda value: value is not None}
+SIMPLEEVAL_FUNCTIONS = {"defined": lambda value: value is not None, "max": max, "min": min}
 
 
 @dataclass
@@ -31,8 +31,8 @@ def evaluate(profile: MachineProfile, axis_values: dict[str, Any]) -> JudgementR
     for derived in profile.derived:
         names[derived.key] = simple_eval(derived.expr, names=names, functions=SIMPLEEVAL_FUNCTIONS)
 
-    if profile.ev_lookup is not None:
-        names[profile.ev_lookup.result_key] = _lookup_ev(profile, names)
+    for ev_lookup in profile.ev_lookups:
+        names[ev_lookup.result_key] = _lookup_ev(ev_lookup, profile, names)
 
     for rule in profile.rules:
         if simple_eval(rule.condition, names=names, functions=SIMPLEEVAL_FUNCTIONS):
@@ -46,7 +46,7 @@ def evaluate(profile: MachineProfile, axis_values: dict[str, Any]) -> JudgementR
     )
 
 
-def _lookup_ev(profile: MachineProfile, names: dict[str, Any]) -> Optional[float]:
+def _lookup_ev(cfg: EVLookupConfig, profile: MachineProfile, names: dict[str, Any]) -> Optional[float]:
     """profile.tablesを参照して期待値(または任意の連続値)を求める汎用ルックアップ。
 
     table_select_axisの真偽でテーブル群(例:据え置き/リセット)を選び、rate_axisの
@@ -54,11 +54,12 @@ def _lookup_ev(profile: MachineProfile, names: dict[str, Any]) -> Optional[float
     その中でgame_count_axisの値を挟む2点間を線形補間する。範囲外は両端でクランプ
     する。必要な軸の値が欠けている、または該当行が1つもない場合はNoneを返す
     (呼び出し側のrulesで「判定不可」を表現できるようにするため)。
-    """
-    cfg = profile.ev_lookup
-    if cfg is None:
-        return None
 
+    1つの機種プロファイルが複数系統の天井カウンターを持つ場合(例:AT間天井と
+    CZ間天井が別管理)、profile.ev_lookupsに複数のEVLookupConfigを並べ、それぞれ
+    別のresult_keyで結果を公開する。どちらを採用するか(例:高い方を使う)は
+    rules側の条件式でmax()等を使って機種プロファイルごとに決める。
+    """
     select_flag = names.get(cfg.table_select_axis)
     rate_key = names.get(cfg.rate_axis)
     cycle_value = names.get(cfg.cycle_axis)

@@ -21,10 +21,19 @@ def render_machine_picker(profiles: list[MachineProfile]) -> None:
     cols = st.columns(2)
     for i, profile in enumerate(profiles):
         with cols[i % 2]:
-            render_header_image(profile)
-            if st.button(profile.name, key=f"pick_{profile.id}", use_container_width=True):
-                st.session_state["selected_profile_id"] = profile.id
-                st.rerun()
+            with st.container(border=True):
+                has_image = profile.header_image and Path(profile.header_image).exists()
+                if has_image:
+                    render_header_image(profile)
+                else:
+                    st.markdown(
+                        "<div style='font-size:2.5rem;text-align:center;'>🎰</div>",
+                        unsafe_allow_html=True,
+                    )
+                st.markdown(f"**{profile.name}**")
+                if st.button("選ぶ", key=f"pick_{profile.id}", use_container_width=True):
+                    st.session_state["selected_profile_id"] = profile.id
+                    st.rerun()
 
 
 def get_selected_profile(profiles: list[MachineProfile]) -> MachineProfile | None:

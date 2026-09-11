@@ -37,7 +37,7 @@ def check_password() -> bool:
     return False
 
 
-def render_log_section(profile_id: str) -> None:
+def render_log_section(profile_id: str, *, show_change_machine: bool) -> None:
     st.divider()
     with st.expander("実戦を終えたら:結果を記録する"):
         log_id = st.text_input("記録ID(判定後に表示されたIDを入力)", value=st.session_state.get("last_log_id", ""))
@@ -60,6 +60,12 @@ def render_log_section(profile_id: str) -> None:
             succeeded, remaining = retry_pending()
             st.info(f"{succeeded}件送信しました。残り{remaining}件です")
 
+    if show_change_machine:
+        st.divider()
+        if st.button("← 別の機種を選ぶ", use_container_width=True):
+            del st.session_state["selected_profile_id"]
+            st.rerun()
+
 
 def main() -> None:
     st.set_page_config(page_title="天井ボーダー計算", page_icon="🎰", layout="centered")
@@ -67,7 +73,7 @@ def main() -> None:
     if not check_password():
         return
 
-    st.warning(DISCLAIMER)
+    st.caption(f"⚠️ {DISCLAIMER}")
 
     try:
         profiles = load_all_profiles(PROFILES_DIR)
@@ -79,14 +85,12 @@ def main() -> None:
         st.error("機種プロファイルが見つかりません。")
         return
 
-    if len(profiles) > 1:
+    multi_machine = len(profiles) > 1
+    if multi_machine:
         profile = get_selected_profile(profiles)
         if profile is None:
             render_machine_picker(profiles)
             return
-        if st.button("← 機種を変更"):
-            del st.session_state["selected_profile_id"]
-            st.rerun()
     else:
         profile = profiles[0]
 
@@ -100,16 +104,17 @@ def main() -> None:
         render_result(judgement)
 
         investment_yen = st.number_input("現在の投資額(円・任意)", min_value=0.0, step=100.0)
-        render_ev(judgement, investment_yen)
+        render_ev(profile, judgement, investment_yen)
 
         try:
             log_id = append_log(profile.id, axis_values, judgement.result, judgement.rule_id)
             st.session_state["last_log_id"] = log_id
-            st.caption(f"実戦ログに記録しました(ID: {log_id[:8]}...)")
+            st.toast(f"実戦ログに記録しました(ID: {log_id[:8]}...)", icon="📝")
+            st.caption(f"記録ID: {log_id[:8]}...")
         except SheetsLogError as exc:
             st.info(str(exc))
 
-    render_log_section(profile.id)
+    render_log_section(profile.id, show_change_machine=multi_machine)
 
 
 if __name__ == "__main__":

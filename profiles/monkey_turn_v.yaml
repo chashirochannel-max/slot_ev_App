@@ -78,14 +78,15 @@ derived:
 # exchange_rateでどのレート区分を見るかを決め、current_cycle(完全一致)と
 # current_game_count(前後の行を線形補間)で該当する期待値(円)を引く。
 # 結果はev_yenという名前でderived/rulesから参照できるようになる。
-ev_lookup:
-  table_select_axis: reset_likely
-  table_select_true: reset
-  table_select_false: normal
-  rate_axis: exchange_rate
-  cycle_axis: current_cycle
-  game_count_axis: current_game_count
-  result_key: ev_yen
+ev_lookups:
+  - table_select_axis: reset_likely
+    table_select_true: reset
+    table_select_false: normal
+    rate_axis: exchange_rate
+    cycle_axis: current_cycle
+    game_count_axis: current_game_count
+    result_key: ev_yen
+    label: "期待値(設定1想定)"
 
 rules:
   - id: counter_not_visible

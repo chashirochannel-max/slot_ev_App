@@ -6,9 +6,9 @@
 #
 # この機種は「実ゲーム数(AT間天井、最大1200G)」と「液晶ゲーム数(CZ間天井、
 # 最大800G+α)」という2つの独立したゲーム数カウンターを持つ、モンキーターンVとは
-# 全く別方式の天井システム。v1では、より基本的な「実ゲーム数基準(AT間天井)」の
-# 期待値テーブルのみを使用する。液晶ゲーム数(CZ間天井)側は、2つのカウンターの
-# 相互作用の理解が今のところ確度を持てないため、v1では未実装。
+# 全く別方式の天井システム。両方とも画面上で直接観測できるため、両カウンターの
+# 期待値をそれぞれテーブル参照し、高い方(ev_real_yen/ev_lcd_yenのmax)を判定に
+# 採用する。UI上は両方の数値を並べて表示し、どちらか一方に丸めて隠さない。
 #
 # 期待値データの前提: 設定1、通常時約30.8G/50枚、AT純増約4.0枚/G
 # 出典: https://slot-toolbox.com/toaru-index2-tenjo/
@@ -19,7 +19,12 @@ header_image: null  # assets/配下に画像を置いたらここにパスを書
 
 axes:
   - key: current_game_count
-    label: "現在の実ゲーム数(AT間天井カウンター)"
+    label: "現在の実ゲーム数(AT間天井カウンター・最大1200G)"
+    type: number
+    default: 0
+
+  - key: lcd_game_count
+    label: "現在の液晶ゲーム数(CZ間天井カウンター・最大800G+α)"
     type: number
     default: 0
 
@@ -30,10 +35,9 @@ axes:
     default: "等価"
 
 derived:
-  # この機種は「据え置き/リセット」のような2状態を持つテーブルがまだ無く、
-  # tables.mainという単一グループしか使わない。ev_lookupの仕組みは
-  # table_select_axis(boolean)でテーブル群を選ぶ設計だが、選ぶ対象が1つしか
-  # ないので、常にtrueを返す定数を割り当てて単一グループに固定している。
+  # tables.real_at / tables.lcd_czという単一グループしか使わないが、
+  # ev_lookupsの仕組み上table_select_axis(boolean)が必須なので、常にtrueを
+  # 返す定数を割り当てて固定している。
   - key: always_main
     expr: "True"
 
@@ -43,41 +47,54 @@ derived:
   - key: dummy_cycle
     expr: "1"
 
-ev_lookup:
-  table_select_axis: always_main
-  table_select_true: main
-  table_select_false: main
-  rate_axis: exchange_rate
-  cycle_axis: dummy_cycle
-  game_count_axis: current_game_count
-  result_key: ev_yen
+# 2系統の天井カウンターをそれぞれ独立にテーブル参照する。
+ev_lookups:
+  - table_select_axis: always_main
+    table_select_true: real_at
+    table_select_false: real_at
+    rate_axis: exchange_rate
+    cycle_axis: dummy_cycle
+    game_count_axis: current_game_count
+    result_key: ev_real_yen
+    label: "期待値(実ゲーム数基準・AT間天井)"
+
+  - table_select_axis: always_main
+    table_select_true: lcd_cz
+    table_select_false: lcd_cz
+    rate_axis: exchange_rate
+    cycle_axis: dummy_cycle
+    game_count_axis: lcd_game_count
+    result_key: ev_lcd_yen
+    label: "期待値(液晶ゲーム数基準・CZ間天井)"
 
 rules:
   - id: ev_missing
-    condition: "ev_yen == None"
+    condition: "ev_real_yen == None or ev_lcd_yen == None"
     result: "様子見"
     reason: "入力されたゲーム数が期待値データの範囲外、または未入力です。入力内容を確認してください。"
 
+  # ev_watch_band(±200円)は収支分岐点付近の「誤差」とみなすバッファ。
+  # 2系統のうち高い方(max)を採用して判定する。
   - id: ev_go
-    condition: "ev_yen != None and ev_yen > 200"
+    condition: "ev_real_yen != None and ev_lcd_yen != None and max(ev_real_yen, ev_lcd_yen) > 200"
     result: "続行推奨"
-    reason: "期待値(設定1想定・実ゲーム数基準)がプラス圏。攻略データ上は続行優位の目安です。"
+    reason: "実ゲーム数・液晶ゲーム数のうち高い方の期待値(設定1想定)がプラス圏。攻略データ上は続行優位の目安です。"
 
   - id: ev_watch
-    condition: "ev_yen != None and ev_yen >= -200"
+    condition: "ev_real_yen != None and ev_lcd_yen != None and max(ev_real_yen, ev_lcd_yen) >= -200"
     result: "様子見"
-    reason: "期待値(設定1想定・実ゲーム数基準)が収支分岐点付近。プラスマイナスどちらとも言えない目安です。"
+    reason: "実ゲーム数・液晶ゲーム数どちらの期待値(設定1想定)も収支分岐点付近。プラスマイナスどちらとも言えない目安です。"
 
 default_result: "見送り"
-default_reason: "期待値(設定1想定・実ゲーム数基準)がマイナス圏。攻略データ上は見送り優位の目安です。"
+default_reason: "実ゲーム数・液晶ゲーム数どちらの期待値(設定1想定)もマイナス圏。攻略データ上は見送り優位の目安です。"
 
 notes: >
-  2026年8月導入の新台のため解析データがまだ薄い。実ゲーム数基準(AT間天井1200G)の
-  期待値のみを使用しており、液晶ゲーム数基準(CZ間天井800G+α)側は未反映。
-  実戦ログが貯まったら、光さん自身のデータで検証・補正すること。
+  2026年8月導入の新台のため解析データがまだ薄い。実ゲーム数基準(AT間天井1200G)・
+  液晶ゲーム数基準(CZ間天井800G+α)の両方の期待値テーブルを使用し、高い方を判定に
+  採用している。実戦ログが貯まったら、光さん自身のデータで検証・補正すること。
 
 tables:
-  main:
+  real_at:
     等価:
     - [0, 1, -695]
     - [100, 1, -517]
@@ -117,3 +134,34 @@ tables:
     - [900, 1, 3907]
     - [1000, 1, 5734]
     - [1100, 1, 8038]
+  lcd_cz:
+    等価:
+    - [0, 1, -695]
+    - [100, 1, -567]
+    - [200, 1, -365]
+    - [300, 1, -53]
+    - [400, 1, 427]
+    - [500, 1, 1168]
+    - [600, 1, 2299]
+    - [700, 1, 4018]
+    - [800, 1, 6625]
+    5.6枚持ちメダル:
+    - [0, 1, -621]
+    - [100, 1, -506]
+    - [200, 1, -326]
+    - [300, 1, -48]
+    - [400, 1, 381]
+    - [500, 1, 1043]
+    - [600, 1, 2053]
+    - [700, 1, 3588]
+    - [800, 1, 5915]
+    5.6枚現金:
+    - [0, 1, -2008]
+    - [100, 1, -1879]
+    - [200, 1, -1678]
+    - [300, 1, -1366]
+    - [400, 1, -886]
+    - [500, 1, -144]
+    - [600, 1, 986]
+    - [700, 1, 2705]
+    - [800, 1, 5312]

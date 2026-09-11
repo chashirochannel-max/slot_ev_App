@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field, model_validator
 
 # derived/axis condition/rule condition の式中で参照を許可する関数名。
 # simpleeval側にも同じ名前で関数を登録すること(engine/rules.py参照)。
-ALLOWED_FUNCTIONS = {"defined"}
+ALLOWED_FUNCTIONS = {"defined", "max", "min"}
 
 # 式の中で使用を禁止する構文ノード。属性アクセス・添字アクセス・ラムダ・
 # 内包表記・importなどは軸の値がすべてnumber/boolean/Noneである前提では
@@ -70,6 +70,7 @@ class EVLookupConfig(BaseModel):
     cycle_axis: str  # テーブル行の整数キー(周期数など)
     game_count_axis: str  # テーブル行の連続値キー(ゲーム数など)。行間は線形補間する
     result_key: str = "ev_yen"  # 参照結果をnamesに公開する名前。derived/rulesから参照できる
+    label: Optional[str] = None  # UI表示用ラベル。省略時はresult_keyをそのまま使う
 
 
 class MachineProfile(BaseModel):
@@ -78,7 +79,11 @@ class MachineProfile(BaseModel):
     header_image: Optional[str] = None  # assets/配下の画像への相対パス。光さんが自分で用意したものを置く
     axes: list[Axis]
     derived: list[DerivedVar] = Field(default_factory=list)
-    ev_lookup: Optional[EVLookupConfig] = None
+    # 機種によっては天井カウンターが複数系統ある(例:AT間天井とCZ間天井が別管理)ため
+    # リストで持つ。各エントリのresult_keyで別々の名前としてnamesに公開されるので、
+    # 複数系統をどう合成するか(例:max()で高い方を採用)はderived側で機種プロファイル
+    # ごとに自由に書ける。1系統しかない機種は要素数1のリストになる。
+    ev_lookups: list[EVLookupConfig] = Field(default_factory=list)
     # tables[group][rate_key] = [(game_count, cycle, ev_yen), ...]
     tables: dict[str, dict[str, list[tuple[float, int, float]]]] = Field(default_factory=dict)
     rules: list[Rule]
@@ -102,10 +107,9 @@ class MachineProfile(BaseModel):
                 )
             known_names = known_names | {derived.key}
 
-        # ev_lookupはderivedの後(rulesの前)に評価される(engine/rules.py参照)ため、
+        # ev_lookupsはderivedの後(rulesの前)に評価される(engine/rules.py参照)ため、
         # 参照先はaxesだけでなくderivedで定義した値でもよい。
-        if self.ev_lookup is not None:
-            cfg = self.ev_lookup
+        for i, cfg in enumerate(self.ev_lookups):
             for axis_ref, field_name in (
                 (cfg.table_select_axis, "table_select_axis"),
                 (cfg.rate_axis, "rate_axis"),
@@ -114,15 +118,15 @@ class MachineProfile(BaseModel):
             ):
                 if axis_ref not in known_names:
                     raise ProfileValidationError(
-                        f"ev_lookup.{field_name} references undefined name '{axis_ref}'"
+                        f"ev_lookups[{i}].{field_name} references undefined name '{axis_ref}'"
                     )
             if cfg.table_select_true not in self.tables or cfg.table_select_false not in self.tables:
                 raise ProfileValidationError(
-                    "ev_lookup.table_select_true/false must both be keys of `tables`"
+                    f"ev_lookups[{i}].table_select_true/false must both be keys of `tables`"
                 )
             if cfg.result_key in known_names:
                 raise ProfileValidationError(
-                    f"ev_lookup.result_key '{cfg.result_key}' collides with an existing axis key"
+                    f"ev_lookups[{i}].result_key '{cfg.result_key}' collides with an existing name"
                 )
             known_names = known_names | {cfg.result_key}
 
