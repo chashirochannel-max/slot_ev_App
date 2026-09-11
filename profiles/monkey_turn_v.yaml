@@ -1,0 +1,106 @@
+# スマスロ モンキーターンV 機種プロファイル
+#
+# 【精度についての注意】
+# ここに記載する天井・周期のしきい値は複数の攻略情報サイトの解析情報を集約した
+# ものであり、公式一次情報ではない。「確定した数値」ではなく「目安のしきい値」
+# として扱うこと。特に周期別の必要ポイント数は情報源間で差異があり不確実。
+# 実戦ログが蓄積された段階で、光さん自身のデータに基づき調整すること。
+
+id: monkey_turn_v
+name: "スマスロ モンキーターンV"
+rate_default: 21.73  # 円/枚(初期値、UI上で変更可能)
+
+axes:
+  - key: counter_visible
+    label: "周期カウンター表示が出ているか"
+    type: boolean
+    default: true
+    # AT終了直後・朝イチ数ゲームは表示が出ないため、falseの場合は判定を保留する
+
+  - key: current_cycle
+    label: "現在の周期数"
+    type: number
+    default: 1
+    # 画面表示から直接観測する値。据え置き機でも表示自体が前日分を含む累計値
+    # として保持されるため、ここに前日分を別途加算する必要はない。
+
+  - key: current_point
+    label: "現在の激走ポイント(任意・参考表示のみ)"
+    type: number
+    optional: true
+    # v1では判定ロジックには使わない(周期別必要ポイント数が情報源間で不確実
+    # なため)。結果画面での参考表示にのみ使用。精密な残りポイント判定はv2で
+    # 実戦ログが十分貯まってから検討する。
+
+  - key: rival_mode
+    label: "ライバルモード滞在中か"
+    type: boolean
+    default: false
+
+  - key: reset_likely
+    label: "設定変更(0G状態)が濃厚か"
+    type: boolean
+    default: true
+
+  - key: carryover_prev_cycle
+    label: "前日の最終周期数(据え置き時のみ・整合性チェック用)"
+    type: number
+    optional: true
+    condition: "not reset_likely"
+    # 判定の加算には使わない。「据え置きのはずなのに現在の周期数が前日より
+    # 少ない」という矛盾を検知するための整合性チェック専用の入力。
+
+  - key: bet_rate
+    label: "枚単価(円)"
+    type: number
+    default: 21.73
+
+derived:
+  # 現状はcurrent_cycleをそのまま使うだけの恒等式だが、判定式(rules)から
+  # 意味の分かる名前で参照できるようにするため、また将来current_pointを
+  # 組み込んだ精密化を行う際の差し替えポイントとして残す。
+  - key: effective_cycle
+    expr: "current_cycle"
+
+  # 据え置き前提なのに現在周期数が前日最終周期数を下回っている場合、
+  # 実は途中でリセットされたか、他のプレイヤーがAT当選した可能性がある。
+  - key: carryover_mismatch
+    expr: "(not reset_likely) and defined(carryover_prev_cycle) and (current_cycle < carryover_prev_cycle)"
+
+rules:
+  - id: counter_not_visible
+    condition: "not counter_visible"
+    result: "様子見"
+    reason: "周期カウンター表示がまだ出ていません。数ゲーム消化して表示が出てから再確認してください。"
+
+  - id: rival_go
+    condition: "rival_mode and effective_cycle >= 3"
+    result: "続行推奨"
+    reason: "ライバルモード滞在中かつ3周期目以降。攻略情報の目安ではこの帯からボーダーを超えます。"
+
+  - id: rival_watch
+    condition: "rival_mode and effective_cycle == 2"
+    result: "様子見"
+    reason: "ライバルモード滞在中で2周期目。もう1周期進めばボーダー超えの目安です。"
+
+  - id: normal_go
+    condition: "(not rival_mode) and effective_cycle >= 5"
+    result: "続行推奨"
+    reason: "通常時、5周期目以降。攻略情報の目安ではこの帯から期待値がプラスに転じます。"
+
+  - id: normal_watch
+    condition: "(not rival_mode) and effective_cycle == 4"
+    result: "様子見"
+    reason: "通常時、4周期目。もう1周期進めばボーダー超えの目安です。"
+
+default_result: "見送り"
+default_reason: "現状の周期数では攻略情報ベースの目安ボーダーに届いていません。"
+
+# AT当選1回あたりの想定差枚(プレースホルダー、要調整の目安値)。
+# 回収ライン目安 = avg_at_payout_medals * bet_rate として結果画面に表示する。
+avg_at_payout_medals: 2500
+
+notes: >
+  天井666pt・最大6周期・1周期目平均80G・リセット後最大495G+α/最大4周期、という
+  仕様は攻略サイト情報の集約であり公式一次情報ではない。実戦データが貯まり次第、
+  rules/derivedのしきい値を光さん自身のデータで補正すること。

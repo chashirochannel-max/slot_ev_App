@@ -1,0 +1,6 @@
+streamlit==1.63.0
+PyYAML==6.0.3
+simpleeval==1.0.7
+pydantic==2.13.5
+gspread==6.2.1
+google-auth==2.58.0
