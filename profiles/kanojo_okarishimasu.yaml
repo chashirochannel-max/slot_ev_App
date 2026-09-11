@@ -1,0 +1,116 @@
+# スマスロ 彼女、お借りします 機種プロファイル
+#
+# 【重要な注意:期待値データは未確認】
+# 2026年9月7日導入のごく新しい機種であり、本プロファイル作成時点(2026年9月11日、
+# 導入からわずか4日)では、複数の解析サイトを調査したが「ゲーム数ごとの期待値
+# (円換算)テーブル」はまだどこにも公開されていないことを確認した。
+# 以下のサイトは軒並み「続報待ち」「導入以降、順次公開予定」「現在調査中」と
+# 明記しており、画像化された表はあってもテキストとして数値を裏取りできる
+# ソースは見つからなかった(WebFetchの要約が実在しない数値を作文するリスクが
+# あるため、数値が取得できなかった場合はここに一切記載しない方針とした):
+#   - https://chonborista.com/slot/sankyo-slot/263079/ (期待値表は画像のみ、数値未取得)
+#   - https://pachislot.win/smaslot-kanojo-okarishimasu-guide/ (「続報待ち」と明記)
+#   - https://flick7.net/slot/kanokari/tenjo/ (「導入以降、順次公開予定」と明記)
+#   - https://1geki.jp/slot/l_kanokari/ (期待値表への言及なし)
+# そのため本プロファイルは、複数サイトで数値が一致し裏取りできた「天井G数」の
+# 仕組みのみをrules/default_resultで扱う簡易版とし、ev_lookups/tablesは空のまま
+# とする。期待値表が解析サイトに掲載され次第、本ファイルを更新すること。
+#
+# 【天井システム(複数サイトで数値一致を確認)】
+# 天井G数は直前の状態によって変化する:
+#   - かのかりBONUS後: 1000G+α
+#   - REGULAR BONUS後: 800G+α
+#   - 設定変更後: 600G+α(短縮)
+# 天井到達で「かのかりBONUS当選濃厚」とされる。
+# 消化ゲーム数が百の位が奇数(100/300/500/700/900G)に到達するとCZ抽選のチャンス、
+# 偶数(200/400/600/800G)に到達するとポイント高確移行濃厚となる。
+# 通常時にはモードA〜Cが存在し、モードによってCZ期待度のゲーム数分布が異なる
+# とされるが、モードの詳細な振り分け・示唆演出はサイトによって記述が食い違い
+# (例:モードCは100G・700Gが高期待度とする記事と、500Gが高期待度ゾーンとする
+# 記事があり内容が一致しない)裏取りできなかったため、本プロファイルでは軸として
+# 扱わない(参考情報として上記に留める)。
+# 出典(天井G数・CZ抽選G数について、複数サイトで一致確認):
+#   - https://chonborista.com/slot/sankyo-slot/263079/
+#   - https://flick7.net/slot/kanokari/tenjo/
+#   - https://1geki.jp/slot/l_kanokari/
+#   - https://www.slopachi-quest.com/article/kanojo-okari-shimasu-tenjou/
+
+id: kanojo_okarishimasu
+name: "スマスロ 彼女、お借りします"
+header_image: null
+
+axes:
+  - key: current_game_count
+    label: "現在の消化ゲーム数(前回のボーナス/設定変更からの表示G数)"
+    type: number
+    default: 0
+
+  - key: ceiling_source
+    label: "天井の起点(直前の状態)"
+    type: enum
+    options:
+      - "かのかりBONUS後(天井1000G)"
+      - "REGULAR BONUS後(天井800G)"
+      - "設定変更濃厚(天井600G)"
+    default: "REGULAR BONUS後(天井800G)"
+    # 画面の履歴表示や朝イチ状況から判断する。天井までの残りG数の算出にのみ使う。
+
+derived:
+  # 天井の起点(ceiling_source)から、実際の天井ゲーム数(+αを除いた基準値)を求める。
+  - key: ceiling_game_count
+    expr: "1000 if ceiling_source == 'かのかりBONUS後(天井1000G)' else (800 if ceiling_source == 'REGULAR BONUS後(天井800G)' else 600)"
+
+  - key: remaining_to_ceiling
+    expr: "ceiling_game_count - current_game_count"
+
+# 期待値(円換算)テーブルは出典なしのため、ev_lookups/tablesは持たない。
+# rulesは「天井G数の仕組み」のみに基づく簡易判定とする。
+
+rules:
+  - id: ceiling_reached
+    condition: "remaining_to_ceiling <= 0"
+    result: "続行推奨"
+    reason: >
+      天井G数に到達しています(サイト解析上、天井到達でかのかりBONUS当選濃厚と
+      されています)。ただし円換算の期待値データは未確認のため、収支の大きさまでは
+      保証されません。あくまで「天井到達=ボーナス濃厚」という仕組み面のみの目安です。
+
+  # 100Gという閾値は「次のCZ抽選/高確移行(100G刻み)が近い」ことを示すための
+  # 暫定的な目安であり、期待値データに基づくものではない。実戦ログが貯まり
+  # 期待値表が公開され次第、この簡易ルールごと見直すこと。
+  - id: near_ceiling
+    condition: "remaining_to_ceiling <= 100"
+    result: "様子見"
+    reason: >
+      天井まで残り100G以内です。100G刻みのCZ抽選/高確移行のタイミングにも近く、
+      粘るかどうかの判断が分かれる域です。円換算の期待値データは未確認のため、
+      投資額と相談した上での参考情報としてください。
+
+default_result: "様子見"
+default_reason: >
+  この機種は期待値(円換算)テーブルの出典が確認できなかったため、経済的な
+  続行/見送り判断はできません。天井までの残りゲーム数という仕組み面の目安のみを
+  表示しています。解析サイトに期待値データが公開され次第、プロファイルを
+  更新してください。
+
+notes: >
+  2026年9月7日導入(本プロファイル作成日2026年9月11日、導入から4日)のごく新しい
+  機種のため、期待値(円換算)テーブルはchonborista.com・pachislot.win・
+  flick7.net・1geki.jp・slopachi-quest.comのいずれにもまだ公開されていない
+  ことを確認した(「続報待ち」「導入以降順次公開予定」等の明記あり、または
+  画像のみでテキスト数値が取得できず)。存在しない数値を捏造することは避け、
+  複数サイトで数値が一致し裏取りできた天井G数の仕組み(かのかりBONUS後1000G+α/
+  REGULAR BONUS後800G+α/設定変更後600G+α、CZ抽選100・300・500・700・900G、
+  高確移行200・400・600・800G)のみを反映したrules/default_resultのみの簡易版
+  としている。ev_lookups/tablesは意図的に空のまま。モードA〜Cの詳細はサイト間で
+  記述が食い違い裏取りできなかったため軸に含めていない。設定1のCZ確率は約1/172、
+  設定6で約1/149という記載が1geki.jpにあったが、プレイ中に自分の設定を知る
+  手段がないため判定には使っていない(参考情報)。
+  期待値データが解析サイトに掲載され次第、monkey_turn_v.yaml等と同じ形式で
+  ev_lookups/tablesを追加し、本プロファイルを更新すること。
+  出典:
+  - https://chonborista.com/slot/sankyo-slot/263079/
+  - https://flick7.net/slot/kanokari/tenjo/
+  - https://1geki.jp/slot/l_kanokari/
+  - https://www.slopachi-quest.com/article/kanojo-okari-shimasu-tenjou/
+  - https://pachislot.win/smaslot-kanojo-okarishimasu-guide/

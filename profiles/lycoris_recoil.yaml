@@ -1,0 +1,131 @@
+# スマスロ リコリス・リコイル 機種プロファイル
+#
+# 【重要な注意:期待値データは未確認】
+# 2026年9月7日(月)導入のごく新しい機種(全国20,000台導入)。天井の仕組み自体は
+# 複数の解析サイトで一致しており(下記出典)信頼できるが、モンキーターンVや
+# とある魔術の禁書目録2のような「開始ゲーム数ごとの円換算期待値テーブル」は、
+# 2026年9月11日時点でどの解析サイトにも見当たらなかった。見つかったのは
+# 「300G→850Gで機械割100.3%」のような区間ごとの粗い機械割(%)の目安のみで、
+# 円換算・50G刻みでの連続テーブルではないため、これをそのままev_lookups/tables
+# 形式(行間を線形補間する前提の仕組み)に転記すると、実際には存在しない中間値を
+# 捏造することになってしまう。そのため本プロファイルではev_lookups/tablesは
+# 空のままとし、期待値(円)の自動判定は行わない。
+#
+# 代わりに、複数サイトで一致が取れている「天井ゲーム数の仕組み」(下記)だけを
+# rulesに落とし込み、「天井到達/到達間近」という事実ベースの参考表示に留めている。
+# 実戦ログや円換算の期待値データが出揃ったら、tables/ev_lookupsを追加すること。
+#
+# 【天井の仕組み(2026年9月11日時点、3つの独立した解析サイトで一致)】
+# - AT間天井:通常850G+α。設定変更(リセット)直後・AT駆け抜け(天井到達でAT当選)
+#   直後は600G+αに短縮。上位CZ「リコイル オブ リコリス」失敗直後はさらに
+#   250G+αに短縮される。
+# - CZ間天井:通常600G+α。設定変更直後・AT駆け抜け直後は250G+αに短縮。
+# - 通常時は100G・250G・400G・600G・750Gの規定ゲーム数もCZ抽選のチャンス。
+# - AT間天井到達(850G等)時はAT当選に加えてVストック抽選も行われる。
+#
+# 出典(2026年9月11日取得、3サイトで天井ゲーム数の数値が一致することを確認済み):
+#   - https://chonborista.com/slot/sammy-slot/261631/
+#   - https://nana-press.com/kaiseki/machine/1166/38719/
+#   - https://1geki.jp/slot/l_lycoreco/3/
+#   - https://slobase.jp/machines/lycoris-recoil (導入日2026年9月7日、機械割
+#     設定1:97.9%〜設定6:114.6%の記載を確認。期待値円換算表はなし)
+#
+# 【設定1機械割の参考値(円換算ではなく%。判定ロジックには未使用)】
+#   300G→850G:100.3% / 400G→850G:106.1% / 上位CZ失敗後0G→250G:103.9% /
+#   上位AT終了後0G→850G:105.1%(chonborista, nana-pressで一致)
+#   これらは区間全体の機械割であり、50G刻みの円換算ポイントではないため
+#   tables化(線形補間)には使っていない。
+
+id: lycoris_recoil
+name: "スマスロ リコリス・リコイル"
+header_image: null  # assets/配下に画像を置いたらここにパスを書く
+
+axes:
+  - key: ceiling_mode
+    label: "現在の天井モード(直近の状況から選択)"
+    type: enum
+    options:
+      - "通常(AT間850G・CZ間600G)"
+      - "短縮(AT間600G・CZ間250G)"
+      - "上位CZ失敗後(AT間250Gのみ)"
+    default: "通常(AT間850G・CZ間600G)"
+    # 通常:前回ATが「駆け抜け」でなく通常のCZ経由で終了し、設定変更(リセット)も
+    #   濃厚でない場合。
+    # 短縮:設定変更(0G状態)濃厚、または前回ATが天井到達(駆け抜け)で終了した場合。
+    # 上位CZ失敗後:「リコイル オブ リコリス」等の上位CZに挑戦して外れた直後の場合
+    #   (この状態ではAT間天井のみで管理され、CZ間天井の概念は対象外)。
+
+  - key: current_game_count
+    label: "現在のAT間消化ゲーム数"
+    type: number
+    default: 0
+    # 画面表示のAT間ゲーム数をそのまま入力する。
+
+  - key: current_cz_game_count
+    label: "現在のCZ間消化ゲーム数"
+    type: number
+    optional: true
+    default: 0
+    condition: "ceiling_mode != '上位CZ失敗後(AT間250Gのみ)'"
+    # 上位CZ失敗後モードはAT間天井のみで管理されるため入力対象外(条件で非表示)。
+
+derived:
+  # ceiling_modeに応じて、このモードでのAT間・CZ間天井ゲーム数を数値化する。
+  # (この2つの数値自体は3サイト一致の仕組み情報であり、円換算の期待値ではない)
+  - key: at_ceiling_game
+    expr: "850 if ceiling_mode == '通常(AT間850G・CZ間600G)' else (600 if ceiling_mode == '短縮(AT間600G・CZ間250G)' else 250)"
+
+  - key: cz_ceiling_game
+    expr: "600 if ceiling_mode == '通常(AT間850G・CZ間600G)' else 250"
+
+  - key: games_to_at_ceiling
+    expr: "at_ceiling_game - current_game_count"
+
+  # 上位CZ失敗後モードはcurrent_cz_game_countが未入力(None)になるため、
+  # defined()で未入力時はNoneのまま(=CZ間の残りゲーム数は評価対象外)にする。
+  - key: games_to_cz_ceiling
+    expr: "(cz_ceiling_game - current_cz_game_count) if defined(current_cz_game_count) else None"
+
+# この機種の円換算期待値テーブルは2026年9月11日時点で確認できていないため、
+# ev_lookups/tablesは空のまま(意図的)。期待値(円)の自動判定・表示は行わない。
+ev_lookups: []
+
+rules:
+  - id: at_ceiling_reached
+    condition: "current_game_count >= at_ceiling_game"
+    result: "続行推奨"
+    reason: "選択した天井モードのAT間天井ゲーム数に到達(またはそれ以上)です。CZ成功濃厚またはAT当選が確定する消化数のため続行が有力です。ただし円換算の期待値データは未確認のため、ゲーム数天井到達の事実のみに基づく目安です。"
+
+  - id: cz_ceiling_reached
+    condition: "defined(current_cz_game_count) and current_cz_game_count >= cz_ceiling_game"
+    result: "続行推奨"
+    reason: "選択した天井モードのCZ間天井ゲーム数に到達(またはそれ以上)です。CZ成功が確定する消化数のため続行が有力です。円換算の期待値データは未確認のため、ゲーム数天井到達の事実のみに基づく目安です。"
+
+  - id: near_at_ceiling
+    condition: "games_to_at_ceiling <= 50"
+    result: "様子見"
+    reason: "AT間天井まで残り50G以内(暫定的な目安バッファ)です。天井到達が近いため様子見。円換算の期待値データは未確認です。"
+
+  - id: near_cz_ceiling
+    condition: "defined(games_to_cz_ceiling) and games_to_cz_ceiling <= 50"
+    result: "様子見"
+    reason: "CZ間天井まで残り50G以内(暫定的な目安バッファ)です。天井到達が近いため様子見。円換算の期待値データは未確認です。"
+
+default_result: "判定不可(期待値データ未確認)"
+default_reason: >
+  この機種は2026年9月7日導入のごく新しい台のため、円換算の期待値データがまだ
+  確認できていません。現在の天井モードと消化ゲーム数から、天井到達状況のみを
+  事実ベースで参考表示しています。続行可否の最終判断は、実戦データが蓄積される
+  まで光さん自身の感覚・最新の攻略サイト情報と合わせて行ってください。
+
+notes: >
+  2026年9月7日導入の新台(全国20,000台)。天井の仕組み(AT間850G+α/600G+α/
+  250G+α、CZ間600G+α/250G+α)はchonborista.com・nana-press.com・1geki.jpの
+  3サイトで数値が一致しており信頼度は高い。一方、円換算・ゲーム数刻みの期待値
+  テーブルは2026年9月11日時点でどの解析サイトにも見当たらず(区間ごとの粗い
+  機械割%のみで、50G刻みのような連続データではない)、数値の捏造を避けるため
+  ev_lookups/tablesは空のままにしている。このプロファイルは「天井到達/到達間近」
+  という事実ベースの参考表示のみを行い、円換算の期待値判定は行わない簡易版。
+  実戦ログ・円換算の期待値データが解析サイトに出揃った段階で、
+  monkey_turn_v.yaml / toaru_index2.yaml と同様のev_lookups/tables形式に
+  拡張すること。
