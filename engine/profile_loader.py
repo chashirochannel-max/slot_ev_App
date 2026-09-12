@@ -100,6 +100,11 @@ class MachineProfile(BaseModel):
     default_result: str
     default_reason: str = ""
     notes: Optional[str] = None
+    # ev_yen等が「どこまで打ち続けた場合の期待値か」(自然当選/天井到達まで打ち切り、
+    # AT終了後は追加で粘らずヤメる、等)を出典サイトの記載に基づいて短く要約した
+    # もの。結果画面でEVと一緒に表示し、「この数値通りに動くための正しいヤメ時」を
+    # 光さんが確認できるようにする(2026年9月の指摘を受けて追加)。
+    ev_policy_note: Optional[str] = None
 
     @model_validator(mode="after")
     def _validate_expressions(self) -> "MachineProfile":

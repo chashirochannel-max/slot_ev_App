@@ -54,3 +54,6 @@ def render_ev(profile: MachineProfile, judgement: JudgementResult, investment_ye
     st.caption("意思決定は「残り期待値」ベースで。ここまでの投資済み額に判断を引っ張られないよう注意してください。")
     if investment_yen:
         st.caption(f"参考:現在の投資額 ¥{investment_yen:,.0f}(上のdeltaは期待値との差額)")
+
+    if profile.ev_policy_note:
+        st.info(f"🕐 **この数値を実現する前提(正しいヤメ時)**\n\n{profile.ev_policy_note}")
