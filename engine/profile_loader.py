@@ -74,6 +74,12 @@ class EVLookupConfig(BaseModel):
     game_count_axis: str  # テーブル行の連続値キー(ゲーム数など)。行間は線形補間する
     result_key: str = "ev_yen"  # 参照結果をnamesに公開する名前。derived/rulesから参照できる
     label: Optional[str] = None  # UI表示用ラベル。省略時はresult_keyをそのまま使う
+    # table_select_true/falseが異なるテーブル群を指す場合(例:設定変更後/通常時で
+    # 参照テーブルが変わる機種)、機種選択カードの損益分岐ゲーム数をどちらの状態の
+    # ものか明示するための表示ラベル。true==falseの機種(状態による分岐がない)では
+    # 未設定のままでよい。
+    table_true_label: Optional[str] = None
+    table_false_label: Optional[str] = None
 
 
 class MachineProfile(BaseModel):
@@ -127,6 +133,18 @@ class MachineProfile(BaseModel):
             if cfg.table_select_true not in self.tables or cfg.table_select_false not in self.tables:
                 raise ProfileValidationError(
                     f"ev_lookups[{i}].table_select_true/false must both be keys of `tables`"
+                )
+            # true/falseで参照テーブルが異なる(=状態によって期待値が変わる)場合、
+            # 機種選択カードの損益分岐表示がどちらの状態を指すか分からなくなる事故を
+            # 防ぐため、表示ラベルの設定を必須にする。
+            if cfg.table_select_true != cfg.table_select_false and not (
+                cfg.table_true_label and cfg.table_false_label
+            ):
+                raise ProfileValidationError(
+                    f"ev_lookups[{i}]: table_select_true ('{cfg.table_select_true}') and "
+                    f"table_select_false ('{cfg.table_select_false}') differ, so table_true_label "
+                    "and table_false_label must both be set for the picker card to show which "
+                    "state each breakeven line describes."
                 )
             if cfg.result_key in known_names:
                 raise ProfileValidationError(

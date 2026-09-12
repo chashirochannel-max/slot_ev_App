@@ -13,42 +13,63 @@ def render_header_image(profile: MachineProfile) -> None:
         st.image(profile.header_image, use_container_width=True)
 
 
-def _breakeven_lines(profile: MachineProfile) -> list[str]:
-    """各ev_lookupsについて「何ゲームから期待値がプラスに転じるか」を
-    tables(通常状態=table_select_false側)から機械的に計算する。手打ちの
-    要約文だと数値が古くなるリスクがあるため、実際のtablesデータから毎回
-    計算し直す(手打ちのprofile.summaryとは役割を分けている)。
+def _breakeven_text(profile: MachineProfile, table_key: str) -> str | None:
+    """指定したtablesグループについて「何ゲームから期待値がプラスに転じるか」を
+    機械的に計算する。手打ちの要約文だと数値が古くなるリスクがあるため、実際の
+    tablesデータから毎回計算し直す(手打ちのprofile.summaryとは役割を分けている)。
 
     テーブルが周期等で複数系統に分かれている場合、単純にgame_countだけで
     全行をソートすると異なる周期の行が混ざって意味のない交差点を拾って
     しまう(例:周期5のごく早いゲーム数の行が周期1より先に来てしまう)ため、
     最小のcycle値(=最初の周期、モンキーターンVなら1周期目)に絞って計算する。
     """
+    rate_tables = profile.tables.get(table_key, {})
+    if not rate_tables:
+        return None
+    rate_key = "等価" if "等価" in rate_tables else next(iter(rate_tables), None)
+    if rate_key is None:
+        return None
+    all_rows = rate_tables[rate_key]
+    if not all_rows:
+        return None
+
+    distinct_cycles = {row[1] for row in all_rows}
+    base_cycle = min(distinct_cycles)
+    rows = sorted((row for row in all_rows if row[1] == base_cycle), key=lambda row: row[0])
+    if not rows:
+        return None
+
+    breakeven = _find_breakeven(rows)
+    suffix = f"({base_cycle}周期目基準)" if len(distinct_cycles) > 1 else ""
+    if breakeven is None:
+        return f"{suffix}手持ちデータの範囲内ではプラス転換なし"
+    return f"{suffix}約{breakeven:.0f}G以上でプラス目安"
+
+
+def _breakeven_lines(profile: MachineProfile) -> list[str]:
+    """機種選択カードに表示する損益分岐ラインの一覧を組み立てる。
+
+    table_select_true/falseが同じテーブル群を指す機種(状態による分岐がない)は
+    1行のみ。異なるテーブル群を指す機種(設定変更後/通常時などで期待値が変わる)
+    は、どちらの状態の数値かをバッジで明示した2行を出す(光さんの指摘:
+    据え置き前提の数値とリセット前提の数値を混同すると「一日中粘れる良台」に
+    見えてしまう、という誤読を防ぐため)。
+    """
     lines: list[str] = []
     for cfg in profile.ev_lookups:
-        rate_tables = profile.tables.get(cfg.table_select_false, {})
-        if not rate_tables:
-            continue
-        rate_key = "等価" if "等価" in rate_tables else next(iter(rate_tables), None)
-        if rate_key is None:
-            continue
-        all_rows = rate_tables[rate_key]
-        if not all_rows:
-            continue
-
-        distinct_cycles = {row[1] for row in all_rows}
-        base_cycle = min(distinct_cycles)
-        rows = sorted((row for row in all_rows if row[1] == base_cycle), key=lambda row: row[0])
-        if not rows:
-            continue
-
-        breakeven = _find_breakeven(rows)
         label = cfg.label or cfg.result_key
-        suffix = f"・{base_cycle}周期目基準" if len(distinct_cycles) > 1 else ""
-        if breakeven is None:
-            lines.append(f"・{label}{suffix}: 手持ちデータの範囲内ではプラス転換なし")
-        else:
-            lines.append(f"・{label}{suffix}: 約{breakeven:.0f}G以上でプラス目安")
+        if cfg.table_select_true == cfg.table_select_false:
+            text = _breakeven_text(profile, cfg.table_select_false)
+            if text:
+                lines.append(f"・{label}: {text}")
+            continue
+
+        true_text = _breakeven_text(profile, cfg.table_select_true)
+        if true_text:
+            lines.append(f":orange-badge[{cfg.table_true_label}] {label}: {true_text}")
+        false_text = _breakeven_text(profile, cfg.table_select_false)
+        if false_text:
+            lines.append(f":blue-badge[{cfg.table_false_label}] {label}: {false_text}")
     return lines
 
 

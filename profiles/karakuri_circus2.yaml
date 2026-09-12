@@ -106,6 +106,8 @@ ev_lookups:
     game_count_axis: lcd_game_count
     result_key: ev_lcd_yen
     label: "期待値(液晶ゲーム数基準・CZ間天井)"
+    table_true_label: "設定変更後"
+    table_false_label: "通常時"
 
   - table_select_axis: always_main
     table_select_true: goddess_real

@@ -133,6 +133,8 @@ ev_lookups:
     game_count_axis: current_game_count
     result_key: ev_yen
     label: "期待値(設定1想定・AT間実ゲーム数基準)"
+    table_true_label: "設定変更後"
+    table_false_label: "通常時(据え置き)"
 
 rules:
   - id: ev_missing

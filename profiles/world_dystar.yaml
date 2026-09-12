@@ -96,6 +96,8 @@ ev_lookups:
     game_count_axis: game_count
     result_key: ev_yen
     label: "期待値(設定1想定)"
+    table_true_label: "短縮天井(設定変更後・上位ST後・ノスタルジアモード時)"
+    table_false_label: "通常天井"
 
 rules:
   - id: ev_missing
