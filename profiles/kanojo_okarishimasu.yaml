@@ -37,12 +37,13 @@
 
 id: kanojo_okarishimasu
 name: "スマスロ 彼女、お借りします"
+summary: "直前状態で天井G数が変化(かのかりBONUS後1000G+α/REGULAR BONUS後800G+α/設定変更後600G+α)。導入直後で期待値データ未公開。"
 header_image: null
 
 axes:
   - key: current_game_count
     label: "現在の消化ゲーム数(前回のボーナス/設定変更からの表示G数)"
-    type: number
+    type: integer
     default: 0
 
   - key: ceiling_source

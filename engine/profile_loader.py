@@ -39,7 +39,10 @@ class ProfileValidationError(ValueError):
 class Axis(BaseModel):
     key: str
     label: str
-    type: Literal["number", "boolean", "enum"]
+    # "integer"はゲーム数・周期数・回転数など小数を持たない値(タップ操作・
+    # スマホのテンキー表示に向く)。"number"は小数を許容する値(現状未使用だが
+    # 将来のレート等のために残す)。
+    type: Literal["number", "integer", "boolean", "enum"]
     default: Any = None
     optional: bool = False
     condition: Optional[str] = None
@@ -77,6 +80,7 @@ class MachineProfile(BaseModel):
     id: str
     name: str
     header_image: Optional[str] = None  # assets/配下の画像への相対パス。光さんが自分で用意したものを置く
+    summary: Optional[str] = None  # 機種選択カードに表示する短い特徴説明(1〜2行程度)
     axes: list[Axis]
     derived: list[DerivedVar] = Field(default_factory=list)
     # 機種によっては天井カウンターが複数系統ある(例:AT間天井とCZ間天井が別管理)ため

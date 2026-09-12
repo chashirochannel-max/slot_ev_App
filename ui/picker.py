@@ -13,24 +13,76 @@ def render_header_image(profile: MachineProfile) -> None:
         st.image(profile.header_image, use_container_width=True)
 
 
+def _breakeven_lines(profile: MachineProfile) -> list[str]:
+    """各ev_lookupsについて「何ゲームから期待値がプラスに転じるか」を
+    tables(通常状態=table_select_false側)から機械的に計算する。手打ちの
+    要約文だと数値が古くなるリスクがあるため、実際のtablesデータから毎回
+    計算し直す(手打ちのprofile.summaryとは役割を分けている)。
+
+    テーブルが周期等で複数系統に分かれている場合、単純にgame_countだけで
+    全行をソートすると異なる周期の行が混ざって意味のない交差点を拾って
+    しまう(例:周期5のごく早いゲーム数の行が周期1より先に来てしまう)ため、
+    最小のcycle値(=最初の周期、モンキーターンVなら1周期目)に絞って計算する。
+    """
+    lines: list[str] = []
+    for cfg in profile.ev_lookups:
+        rate_tables = profile.tables.get(cfg.table_select_false, {})
+        if not rate_tables:
+            continue
+        rate_key = "等価" if "等価" in rate_tables else next(iter(rate_tables), None)
+        if rate_key is None:
+            continue
+        all_rows = rate_tables[rate_key]
+        if not all_rows:
+            continue
+
+        distinct_cycles = {row[1] for row in all_rows}
+        base_cycle = min(distinct_cycles)
+        rows = sorted((row for row in all_rows if row[1] == base_cycle), key=lambda row: row[0])
+        if not rows:
+            continue
+
+        breakeven = _find_breakeven(rows)
+        label = cfg.label or cfg.result_key
+        suffix = f"・{base_cycle}周期目基準" if len(distinct_cycles) > 1 else ""
+        if breakeven is None:
+            lines.append(f"・{label}{suffix}: 手持ちデータの範囲内ではプラス転換なし")
+        else:
+            lines.append(f"・{label}{suffix}: 約{breakeven:.0f}G以上でプラス目安")
+    return lines
+
+
+def _find_breakeven(rows: list[tuple[float, int, float]]) -> float | None:
+    if rows[0][2] > 0:
+        return rows[0][0]
+    for (g0, _, v0), (g1, _, v1) in zip(rows, rows[1:]):
+        if v0 <= 0 < v1:
+            if v1 == v0:
+                return g0
+            t = -v0 / (v1 - v0)
+            return g0 + t * (g1 - g0)
+    return None
+
+
 def render_machine_picker(profiles: list[MachineProfile]) -> None:
     """機種をカードから選ばせ、選択結果をst.session_stateに保存する。
     選択後はst.rerun()で再描画されるので、この関数自体は値を返さない。
     """
     st.subheader("機種を選択")
+    st.caption("カードの数値目安を見てから、機種を選んで詳しい期待値を試算してください。")
     cols = st.columns(2)
     for i, profile in enumerate(profiles):
         with cols[i % 2]:
             with st.container(border=True):
-                has_image = profile.header_image and Path(profile.header_image).exists()
-                if has_image:
-                    render_header_image(profile)
-                else:
-                    st.markdown(
-                        "<div style='font-size:2.5rem;text-align:center;'>🎰</div>",
-                        unsafe_allow_html=True,
-                    )
+                render_header_image(profile)
                 st.markdown(f"**{profile.name}**")
+
+                if profile.summary:
+                    st.caption(profile.summary)
+
+                for line in _breakeven_lines(profile):
+                    st.caption(line)
+
                 if st.button("選ぶ", key=f"pick_{profile.id}", use_container_width=True):
                     st.session_state["selected_profile_id"] = profile.id
                     st.rerun()

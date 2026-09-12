@@ -15,17 +15,18 @@
 
 id: toaru_index2
 name: "スマスロ とある魔術の禁書目録2"
+summary: "実ゲーム数(AT間天井1200G)と液晶ゲーム数(CZ間天井800G+α)の2カウンター制。導入間もなく解析データは薄め。"
 header_image: null  # assets/配下に画像を置いたらここにパスを書く(例: "assets/toaru_index2.jpg")
 
 axes:
   - key: current_game_count
     label: "現在の実ゲーム数(AT間天井カウンター・最大1200G)"
-    type: number
+    type: integer
     default: 0
 
   - key: lcd_game_count
     label: "現在の液晶ゲーム数(CZ間天井カウンター・最大800G+α)"
-    type: number
+    type: integer
     default: 0
 
   - key: exchange_rate

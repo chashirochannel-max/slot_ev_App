@@ -52,12 +52,13 @@
 
 id: world_dystar
 name: "スマスロ ワールドダイスター"
+summary: "999G+αのゲーム数天井のみのシンプル構成。設定変更後・上位ST後・ノスタルジアモード滞在時は600G+αに短縮。"
 header_image: null  # assets/配下に画像を置いたらここにパスを書く(例: "assets/world_dystar.jpg")
 
 axes:
   - key: game_count
     label: "現在の消化ゲーム数(通常時999G+α/短縮天井600G+α共通のカウンター表示)"
-    type: number
+    type: integer
     default: 0
     # 期待値テーブルの参照キー。画面表示から直接観測する値。
 

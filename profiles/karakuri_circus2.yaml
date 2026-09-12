@@ -49,24 +49,25 @@
 
 id: karakuri_circus2
 name: "スマスロ からくりサーカス2"
+summary: "液晶ゲーム数(CZ間天井1200G/設定変更後500G)・女神間実ゲーム数(890G)・AT間実ゲーム数(2500G)の3カウンター制。"
 header_image: null  # assets/配下に画像を置いたらここにパスを書く(例: "assets/karakuri_circus2.jpg")
 
 axes:
   - key: lcd_game_count
     label: "現在の液晶ゲーム数(CZ間天井カウンター・通常時最深1200G)"
-    type: number
+    type: integer
     default: 0
 
   - key: real_game_count_goddess
     label: "現在の女神間実ゲーム数(CZ間天井カウンター・890Gで機械仕掛けの女神)"
-    type: number
+    type: integer
     default: 0
     # 液晶ゲーム数天井(上のlcd_game_count)とは別カウンター。どちらか先に
     # 到達した方でCZ「機械仕掛けの女神」に当選する。
 
   - key: real_game_count_at
     label: "現在のAT間実ゲーム数(AT間天井カウンター・2500GでAT直撃)"
-    type: number
+    type: integer
     default: 0
 
   - key: reset_likely

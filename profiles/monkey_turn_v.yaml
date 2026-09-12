@@ -16,6 +16,7 @@
 
 id: monkey_turn_v
 name: "スマスロ モンキーターンV"
+summary: "1〜6周期のポイント制。設定変更後は最大4周期に短縮。ライバルモード中は早めにボーダー到達の傾向(期待値には未反映)。"
 
 axes:
   - key: counter_visible
@@ -26,19 +27,19 @@ axes:
 
   - key: current_cycle
     label: "現在の周期数"
-    type: number
+    type: integer
     default: 1
 
   - key: current_game_count
     label: "現在の消化ゲーム数(本日の表示G数)"
-    type: number
+    type: integer
     default: 0
     # 期待値テーブルの参照キー。画面表示から直接観測する値で、据え置きでも
     # 前日分を別途加算する必要はない(current_cycleと同じ理由)。
 
   - key: current_point
     label: "現在の激走ポイント(任意・参考表示のみ)"
-    type: number
+    type: integer
     optional: true
     # 判定(期待値テーブル参照)には使わない。結果画面での参考表示専用。
 
@@ -55,7 +56,7 @@ axes:
 
   - key: carryover_prev_cycle
     label: "前日の最終周期数(据え置き時のみ・整合性チェック用)"
-    type: number
+    type: integer
     optional: true
     condition: "not reset_likely"
     # 判定には使わない。「据え置きのはずなのに現在の周期数が前日より少ない」

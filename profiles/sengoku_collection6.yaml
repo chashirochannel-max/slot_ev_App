@@ -41,18 +41,19 @@
 
 id: sengoku_collection6
 name: "スマスロ 戦国コレクション6"
+summary: "999G+αのゲーム数天井、または6周期消化で当選濃厚。設定変更後は周期天井が3周期に短縮(期待値には周期天井は未反映)。"
 header_image: null
 
 axes:
   - key: current_game_count
     label: "現在のAT間ゲーム数(打ち出しG数・ゲーム数天井は999G+α)"
-    type: number
+    type: integer
     default: 0
     # 期待値テーブルの参照キー。画面表示から直接観測する値。
 
   - key: current_cycle
     label: "現在の周期数(参考表示のみ・期待値計算には未反映)"
-    type: number
+    type: integer
     optional: true
     # 液晶に表示される周期数。周期別の期待値データが見つからなかったため
     # 判定には使わない。周期天井(6周期、リセット時3周期)が近いかどうかの
@@ -60,7 +61,7 @@ axes:
 
   - key: current_korre_count
     label: "現在のコレ数(参考表示のみ・期待値計算には未反映)"
-    type: number
+    type: integer
     optional: true
     # 規定コレ数(111/222/333/444/555/666のいずれか)到達が近いかどうかの
     # 参考情報。判定(期待値テーブル参照)には使わない。

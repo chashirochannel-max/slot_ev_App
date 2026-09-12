@@ -44,6 +44,19 @@ def _render_axis_input(axis: Axis) -> Any:
         default = bool(axis.default) if axis.default is not None else False
         return st.checkbox(axis.label, value=default, key=axis.key)
 
+    if axis.type == "integer":
+        # value/stepをintで渡すとstreamlitの数値入力が整数専用モードになり、
+        # 小数点キーが不要なゲーム数・周期数・回転数の入力に向く
+        # (スマホでも余計な「.」を出さないテンキー寄りの挙動になる)。
+        if axis.optional:
+            provided = st.checkbox(f"{axis.label}を入力する", value=False, key=f"{axis.key}__provided")
+            if not provided:
+                return None
+            default = int(axis.default) if axis.default is not None else 0
+            return st.number_input(axis.label, value=default, step=1, key=axis.key)
+        default = int(axis.default) if axis.default is not None else 0
+        return st.number_input(axis.label, value=default, step=1, key=axis.key)
+
     if axis.type == "number":
         if axis.optional:
             provided = st.checkbox(f"{axis.label}を入力する", value=False, key=f"{axis.key}__provided")
