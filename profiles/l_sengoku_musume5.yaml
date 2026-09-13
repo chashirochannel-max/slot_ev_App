@@ -128,7 +128,7 @@ ev_policy_note: >
   周期内Gの進み方を実Gの1.5倍と仮定した粗い近似モデルで、AT間実G基準の
   期待値とは前提が異なるため単純に合算できません(出典サイトも明記)。
   1〜4周期目のみのデータで、5〜6周期目は数値化されていません。
-header_image: null  # assets/配下に画像を置いたらここにパスを書く(例: "assets/l_sengoku_musume5.jpg")
+header_image: "assets/l_sengoku_musume5.jpg"  # 光さんが用意したメーカー公式画像。scripts/process_header_image.pyで800x400に加工済み
 
 axes:
   - key: current_game_count

@@ -17,6 +17,7 @@
 id: monkey_turn_v
 name: "スマスロ モンキーターンV"
 summary: "1〜6周期のポイント制。設定変更後は最大4周期に短縮。ライバルモード中は早めにボーダー到達の傾向(期待値には未反映)。"
+header_image: "assets/monkey_turn_v.jpg"  # 光さんが用意したメーカー公式画像。scripts/process_header_image.pyで800x400に加工済み
 ev_policy_note: >
   外れても次の周期へ進み、天井(通常6周期/設定変更後4周期)到達または自然当選
   まで打ち続けることを前提にした期待値です(出典サイトの算出条件「AT終了後
