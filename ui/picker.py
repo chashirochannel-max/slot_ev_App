@@ -49,7 +49,7 @@ def render_machine_picker(profiles: list[MachineProfile]) -> None:
     選択後はst.rerun()で再描画されるので、この関数自体は値を返さない。
     """
     st.subheader("機種を選択")
-    st.caption("カードの数値目安を見てから、機種を選んで詳しい期待値を試算してください。")
+    st.caption("各カードの「損益分岐の目安を見る」で数値目安を確認できます。機種を選ぶと詳しい期待値を試算できます。")
     cols = st.columns(2)
     for i, profile in enumerate(profiles):
         with cols[i % 2]:
@@ -60,8 +60,11 @@ def render_machine_picker(profiles: list[MachineProfile]) -> None:
                 if profile.summary:
                     st.caption(profile.summary)
 
-                for line in _breakeven_lines(profile):
-                    st.caption(line)
+                lines = _breakeven_lines(profile)
+                if lines:
+                    with st.expander("損益分岐の目安を見る"):
+                        for line in lines:
+                            st.caption(line)
 
                 if st.button("選ぶ", key=f"pick_{profile.id}", use_container_width=True):
                     st.session_state["selected_profile_id"] = profile.id
