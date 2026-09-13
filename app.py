@@ -13,6 +13,7 @@ import streamlit as st
 from engine.profile_loader import ProfileValidationError, load_all_profiles
 from engine.rules import evaluate
 from services.sheets_log import SheetsLogError, append_log, pending_count, record_outcome, retry_pending
+from ui.breakeven import has_multi_cycle_breakeven, render_cycle_breakeven_section
 from ui.forms import render_form
 from ui.picker import get_selected_profile, render_header_image, render_machine_picker
 from ui.result_view import render_ev, render_result
@@ -119,6 +120,10 @@ def main() -> None:
 
     render_header_image(profile)
     st.subheader(profile.name)
+
+    if has_multi_cycle_breakeven(profile):
+        with st.expander("周期別のプラス転換ゲーム数を見る"):
+            render_cycle_breakeven_section(profile)
 
     axis_values = render_form(profile)
 

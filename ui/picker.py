@@ -6,55 +6,12 @@ from pathlib import Path
 import streamlit as st
 
 from engine.profile_loader import MachineProfile
+from ui.breakeven import base_cycle_breakeven_text
 
 
 def render_header_image(profile: MachineProfile) -> None:
     if profile.header_image and Path(profile.header_image).exists():
         st.image(profile.header_image, use_container_width=True)
-
-
-def _breakeven_text(profile: MachineProfile, table_key: str, rate_axis_key: str) -> str | None:
-    """指定したtablesグループについて「何ゲームから期待値がプラスに転じるか」を
-    機械的に計算する。手打ちの要約文だと数値が古くなるリスクがあるため、実際の
-    tablesデータから毎回計算し直す(手打ちのprofile.summaryとは役割を分けている)。
-
-    テーブルが周期等で複数系統に分かれている場合、単純にgame_countだけで
-    全行をソートすると異なる周期の行が混ざって意味のない交差点を拾って
-    しまう(例:周期5のごく早いゲーム数の行が周期1より先に来てしまう)ため、
-    最小のcycle値(=最初の周期、モンキーターンVなら1周期目)に絞って計算する。
-
-    どの交換レート(等価/5.6枚現金等)で計算するかは、機種選択画面と機種詳細
-    画面(実際の判定フォーム)で必ず一致させる。片方が「等価」で楽観的、
-    もう片方が「5.6枚現金」で保守的、のようにズレると、カードで見た目安と
-    実際の判定結果が食い違って見える(2026年9月に光さんが実戦で遭遇した混乱)。
-    そのため、machine_profile側のexchange_rate軸のdefault値をそのまま使う。
-    """
-    rate_tables = profile.tables.get(table_key, {})
-    if not rate_tables:
-        return None
-    axis_default = next(
-        (axis.default for axis in profile.axes if axis.key == rate_axis_key),
-        None,
-    )
-    rate_key = axis_default if axis_default in rate_tables else next(iter(rate_tables), None)
-    if rate_key is None:
-        return None
-    all_rows = rate_tables[rate_key]
-    if not all_rows:
-        return None
-
-    distinct_cycles = {row[1] for row in all_rows}
-    base_cycle = min(distinct_cycles)
-    rows = sorted((row for row in all_rows if row[1] == base_cycle), key=lambda row: row[0])
-    if not rows:
-        return None
-
-    breakeven = _find_breakeven(rows)
-    suffix = f"({base_cycle}周期目基準)" if len(distinct_cycles) > 1 else ""
-    rate_note = f"[{rate_key}]"
-    if breakeven is None:
-        return f"{suffix}{rate_note}手持ちデータの範囲内ではプラス転換なし"
-    return f"{suffix}{rate_note}約{breakeven:.0f}G以上でプラス目安"
 
 
 def _breakeven_lines(profile: MachineProfile) -> list[str]:
@@ -65,35 +22,26 @@ def _breakeven_lines(profile: MachineProfile) -> list[str]:
     は、どちらの状態の数値かをバッジで明示した2行を出す(光さんの指摘:
     据え置き前提の数値とリセット前提の数値を混同すると「一日中粘れる良台」に
     見えてしまう、という誤読を防ぐため)。
+
+    複数周期を持つ機種(モンキーターンV等)では最初の周期の値のみを表示する
+    (カードは一覧性重視のため)。周期ごとの内訳は機種詳細画面で確認できる。
     """
     lines: list[str] = []
     for cfg in profile.ev_lookups:
         label = cfg.label or cfg.result_key
         if cfg.table_select_true == cfg.table_select_false:
-            text = _breakeven_text(profile, cfg.table_select_false, cfg.rate_axis)
+            text = base_cycle_breakeven_text(profile, cfg.table_select_false, cfg.rate_axis)
             if text:
                 lines.append(f"・{label}: {text}")
             continue
 
-        true_text = _breakeven_text(profile, cfg.table_select_true, cfg.rate_axis)
+        true_text = base_cycle_breakeven_text(profile, cfg.table_select_true, cfg.rate_axis)
         if true_text:
             lines.append(f":orange-badge[{cfg.table_true_label}] {label}: {true_text}")
-        false_text = _breakeven_text(profile, cfg.table_select_false, cfg.rate_axis)
+        false_text = base_cycle_breakeven_text(profile, cfg.table_select_false, cfg.rate_axis)
         if false_text:
             lines.append(f":blue-badge[{cfg.table_false_label}] {label}: {false_text}")
     return lines
-
-
-def _find_breakeven(rows: list[tuple[float, int, float]]) -> float | None:
-    if rows[0][2] > 0:
-        return rows[0][0]
-    for (g0, _, v0), (g1, _, v1) in zip(rows, rows[1:]):
-        if v0 <= 0 < v1:
-            if v1 == v0:
-                return g0
-            t = -v0 / (v1 - v0)
-            return g0 + t * (g1 - g0)
-    return None
 
 
 def render_machine_picker(profiles: list[MachineProfile]) -> None:
