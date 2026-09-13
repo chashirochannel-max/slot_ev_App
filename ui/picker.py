@@ -6,7 +6,7 @@ from pathlib import Path
 import streamlit as st
 
 from engine.profile_loader import MachineProfile
-from ui.breakeven import base_cycle_breakeven_text
+from ui.breakeven import base_cycle_breakeven_text, has_multi_cycle_breakeven, render_cycle_breakeven_section
 
 
 def render_header_image(profile: MachineProfile) -> None:
@@ -65,6 +65,13 @@ def render_machine_picker(profiles: list[MachineProfile]) -> None:
                     with st.expander("損益分岐の目安を見る"):
                         for line in lines:
                             st.caption(line)
+
+                # モンキーターンVのような複数周期を持つ機種は、機種を選ぶ前の
+                # このカードの時点で周期ごとの内訳も確認できるようにする
+                # (光さんの要望:機種詳細画面まで進まなくても見たい)。
+                if has_multi_cycle_breakeven(profile):
+                    with st.expander("周期別のプラス転換ゲーム数を見る"):
+                        render_cycle_breakeven_section(profile)
 
                 if st.button("選ぶ", key=f"pick_{profile.id}", use_container_width=True):
                     st.session_state["selected_profile_id"] = profile.id
