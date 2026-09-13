@@ -41,9 +41,14 @@ def find_breakeven(rows: list[tuple[float, int, float]]) -> float | None:
     return None
 
 
-def _text_for_breakeven(breakeven: float | None) -> str:
+def _text_for_breakeven(breakeven: float | None, rows: list[tuple[float, int, float]]) -> str:
     if breakeven is None:
-        return "手持ちデータの範囲内ではプラス転換なし"
+        # 「データが無い」ではなく「出典サイトが公開している範囲内では
+        # プラスに転じていない」ことを明示する。上限G数を出さないと、
+        # 見た人が「バグでは」と誤解しやすい(2026年9月に実際にあった問い合わせ)。
+        max_g = rows[-1][0] if rows else None
+        cap = f"〜{max_g:.0f}G" if max_g is not None else ""
+        return f"出典データの範囲内({cap})ではプラス転換なし(この周期としては見送り目安)"
     return f"約{breakeven:.0f}G以上でプラス目安"
 
 
@@ -69,7 +74,7 @@ def cycle_breakeven_rows(
     rows_by_cycle = []
     for cycle in distinct_cycles:
         rows = sorted((row for row in all_rows if row[1] == cycle), key=lambda row: row[0])
-        rows_by_cycle.append((cycle, _text_for_breakeven(find_breakeven(rows))))
+        rows_by_cycle.append((cycle, _text_for_breakeven(find_breakeven(rows), rows)))
     return rate_key, rows_by_cycle
 
 
