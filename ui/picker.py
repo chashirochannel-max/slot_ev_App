@@ -13,7 +13,7 @@ def render_header_image(profile: MachineProfile) -> None:
         st.image(profile.header_image, use_container_width=True)
 
 
-def _breakeven_text(profile: MachineProfile, table_key: str) -> str | None:
+def _breakeven_text(profile: MachineProfile, table_key: str, rate_axis_key: str) -> str | None:
     """指定したtablesグループについて「何ゲームから期待値がプラスに転じるか」を
     機械的に計算する。手打ちの要約文だと数値が古くなるリスクがあるため、実際の
     tablesデータから毎回計算し直す(手打ちのprofile.summaryとは役割を分けている)。
@@ -22,11 +22,21 @@ def _breakeven_text(profile: MachineProfile, table_key: str) -> str | None:
     全行をソートすると異なる周期の行が混ざって意味のない交差点を拾って
     しまう(例:周期5のごく早いゲーム数の行が周期1より先に来てしまう)ため、
     最小のcycle値(=最初の周期、モンキーターンVなら1周期目)に絞って計算する。
+
+    どの交換レート(等価/5.6枚現金等)で計算するかは、機種選択画面と機種詳細
+    画面(実際の判定フォーム)で必ず一致させる。片方が「等価」で楽観的、
+    もう片方が「5.6枚現金」で保守的、のようにズレると、カードで見た目安と
+    実際の判定結果が食い違って見える(2026年9月に光さんが実戦で遭遇した混乱)。
+    そのため、machine_profile側のexchange_rate軸のdefault値をそのまま使う。
     """
     rate_tables = profile.tables.get(table_key, {})
     if not rate_tables:
         return None
-    rate_key = "等価" if "等価" in rate_tables else next(iter(rate_tables), None)
+    axis_default = next(
+        (axis.default for axis in profile.axes if axis.key == rate_axis_key),
+        None,
+    )
+    rate_key = axis_default if axis_default in rate_tables else next(iter(rate_tables), None)
     if rate_key is None:
         return None
     all_rows = rate_tables[rate_key]
@@ -41,9 +51,10 @@ def _breakeven_text(profile: MachineProfile, table_key: str) -> str | None:
 
     breakeven = _find_breakeven(rows)
     suffix = f"({base_cycle}周期目基準)" if len(distinct_cycles) > 1 else ""
+    rate_note = f"[{rate_key}]"
     if breakeven is None:
-        return f"{suffix}手持ちデータの範囲内ではプラス転換なし"
-    return f"{suffix}約{breakeven:.0f}G以上でプラス目安"
+        return f"{suffix}{rate_note}手持ちデータの範囲内ではプラス転換なし"
+    return f"{suffix}{rate_note}約{breakeven:.0f}G以上でプラス目安"
 
 
 def _breakeven_lines(profile: MachineProfile) -> list[str]:
@@ -59,15 +70,15 @@ def _breakeven_lines(profile: MachineProfile) -> list[str]:
     for cfg in profile.ev_lookups:
         label = cfg.label or cfg.result_key
         if cfg.table_select_true == cfg.table_select_false:
-            text = _breakeven_text(profile, cfg.table_select_false)
+            text = _breakeven_text(profile, cfg.table_select_false, cfg.rate_axis)
             if text:
                 lines.append(f"・{label}: {text}")
             continue
 
-        true_text = _breakeven_text(profile, cfg.table_select_true)
+        true_text = _breakeven_text(profile, cfg.table_select_true, cfg.rate_axis)
         if true_text:
             lines.append(f":orange-badge[{cfg.table_true_label}] {label}: {true_text}")
-        false_text = _breakeven_text(profile, cfg.table_select_false)
+        false_text = _breakeven_text(profile, cfg.table_select_false, cfg.rate_axis)
         if false_text:
             lines.append(f":blue-badge[{cfg.table_false_label}] {label}: {false_text}")
     return lines
