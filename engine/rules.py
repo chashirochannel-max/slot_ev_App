@@ -32,7 +32,8 @@ def evaluate(profile: MachineProfile, axis_values: dict[str, Any]) -> JudgementR
         names[derived.key] = simple_eval(derived.expr, names=names, functions=SIMPLEEVAL_FUNCTIONS)
 
     for ev_lookup in profile.ev_lookups:
-        names[ev_lookup.result_key] = _lookup_ev(ev_lookup, profile, names)
+        value, _ = lookup_ev_detail(ev_lookup, profile, names)
+        names[ev_lookup.result_key] = value
 
     for rule in profile.rules:
         if simple_eval(rule.condition, names=names, functions=SIMPLEEVAL_FUNCTIONS):
@@ -46,7 +47,9 @@ def evaluate(profile: MachineProfile, axis_values: dict[str, Any]) -> JudgementR
     )
 
 
-def _lookup_ev(cfg: EVLookupConfig, profile: MachineProfile, names: dict[str, Any]) -> Optional[float]:
+def lookup_ev_detail(
+    cfg: EVLookupConfig, profile: MachineProfile, names: dict[str, Any]
+) -> tuple[Optional[float], Optional[str]]:
     """profile.tablesを参照して期待値(または任意の連続値)を求める汎用ルックアップ。
 
     table_select_axisの真偽でテーブル群(例:据え置き/リセット)を選び、rate_axisの
@@ -58,6 +61,10 @@ def _lookup_ev(cfg: EVLookupConfig, profile: MachineProfile, names: dict[str, An
     必要な軸の値が欠けている、または該当行が1つもない場合もNoneを返す
     (呼び出し側のrulesで「判定不可」を表現できるようにするため)。
 
+    戻り値は (値, Noneだった場合の理由文) のタプル。理由文はUI側(result_view.py)
+    が「なぜ期待値が出ないのか」をユーザーに示すために使う。値が求まった場合は
+    理由文は常にNone。
+
     1つの機種プロファイルが複数系統の天井カウンターを持つ場合(例:AT間天井と
     CZ間天井が別管理)、profile.ev_lookupsに複数のEVLookupConfigを並べ、それぞれ
     別のresult_keyで結果を公開する。どちらを採用するか(例:高い方を使う)は
@@ -68,19 +75,27 @@ def _lookup_ev(cfg: EVLookupConfig, profile: MachineProfile, names: dict[str, An
     cycle_value = names.get(cfg.cycle_axis)
     game_count_value = names.get(cfg.game_count_axis)
     if select_flag is None or rate_key is None or cycle_value is None or game_count_value is None:
-        return None
+        return None, "必要な入力(周期数・ゲーム数・交換レート等)が未入力です。"
 
     table_group = cfg.table_select_true if select_flag else cfg.table_select_false
     rows = profile.tables.get(table_group, {}).get(rate_key)
     if not rows:
-        return None
+        return None, f"「{rate_key}」の期待値データがこの機種プロファイルにありません。"
 
     target_cycle = int(round(float(cycle_value)))
     cycle_rows = sorted((row for row in rows if row[1] == target_cycle), key=lambda row: row[0])
     if not cycle_rows:
-        return None
+        return None, f"周期{target_cycle}の期待値データが出典にありません。"
 
-    return _interpolate(cycle_rows, float(game_count_value))
+    value = _interpolate(cycle_rows, float(game_count_value))
+    if value is None:
+        max_g = cycle_rows[-1][0]
+        return None, (
+            f"入力されたゲーム数({game_count_value:.0f}G)が、この周期のデータ範囲"
+            f"(〜{max_g:.0f}G)を超えています。出典データが尽きた先は不明なため、"
+            "この系統の期待値は表示できません。"
+        )
+    return value, None
 
 
 def _interpolate(rows: list[tuple[float, int, float]], game_count: float) -> Optional[float]:
