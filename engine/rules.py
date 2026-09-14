@@ -51,8 +51,11 @@ def _lookup_ev(cfg: EVLookupConfig, profile: MachineProfile, names: dict[str, An
 
     table_select_axisの真偽でテーブル群(例:据え置き/リセット)を選び、rate_axisの
     値でテーブル(例:交換レート)を選ぶ。行はcycle_axisで完全一致するものに絞り、
-    その中でgame_count_axisの値を挟む2点間を線形補間する。範囲外は両端でクランプ
-    する。必要な軸の値が欠けている、または該当行が1つもない場合はNoneを返す
+    その中でgame_count_axisの値を挟む2点間を線形補間する。下端(先頭行未満)は
+    先頭行の値にクランプするが、上端(最終行超過)はクランプせずNoneを返す
+    (テーブルが尽きた先を機械的に延長すると、周期の変わり目付近で実際には
+    下がっているかもしれない区間を誤って高く見せるリスクがあるため)。
+    必要な軸の値が欠けている、または該当行が1つもない場合もNoneを返す
     (呼び出し側のrulesで「判定不可」を表現できるようにするため)。
 
     1つの機種プロファイルが複数系統の天井カウンターを持つ場合(例:AT間天井と
@@ -80,11 +83,22 @@ def _lookup_ev(cfg: EVLookupConfig, profile: MachineProfile, names: dict[str, An
     return _interpolate(cycle_rows, float(game_count_value))
 
 
-def _interpolate(rows: list[tuple[float, int, float]], game_count: float) -> float:
+def _interpolate(rows: list[tuple[float, int, float]], game_count: float) -> Optional[float]:
+    """該当周期の行の間はそのまま線形補間する。下端(先頭行未満)は攻略サイトの
+    最小G地点の値をそのまま使う(先頭行はcycle番号自体をダミーG値に使った
+    「周期到達直後」の行で、実際の入力Gがこれを下回ることは実運用上ない)。
+
+    上端(最終行超過)はNoneを返し、クランプしない。理由: 周期の変わり目が
+    近い状態ほど、この機種特有の非単調な期待値変化(有利モードの逐次否定に
+    よる一時的な低下)が起きうるため、データが尽きた先の値を機械的に
+    延長すると、実際には下がっている可能性がある区間を「上がったまま」と
+    誤って見せてしまう危険がある。範囲外は「わからない」として呼び出し側の
+    ev_missingルールに様子見判定を委ねる。
+    """
     if game_count <= rows[0][0]:
         return rows[0][2]
-    if game_count >= rows[-1][0]:
-        return rows[-1][2]
+    if game_count > rows[-1][0]:
+        return None
 
     for (g0, _, v0), (g1, _, v1) in zip(rows, rows[1:]):
         if g0 <= game_count <= g1:
