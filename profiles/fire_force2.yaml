@@ -111,7 +111,7 @@ ev_policy_note: >
   下がることがあります。本プロファイルのテーブル(50G刻みの滑らかな曲線)は
   この落ち込みを完全には表現できていない可能性があるため、250〜350G付近の
   数値は特に額面通り信頼しすぎないでください。
-header_image: null  # assets/配下に画像を置いたらここにパスを書く(例: "assets/fire_force2.jpg")
+header_image: "assets/fire_force2.jpg"
 
 axes:
   - key: current_game_count

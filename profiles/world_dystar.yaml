@@ -62,7 +62,7 @@ ev_policy_note: >
   600G+α短縮天井を基準に次回ボーナスまで続行するのが基本とされており、
   short_ceiling_active(短縮天井)を選んだ場合はこちらの「続行が基本」という
   前提で読んでください。示唆演出による上振れは金額には反映されていません。
-header_image: null  # assets/配下に画像を置いたらここにパスを書く(例: "assets/world_dystar.jpg")
+header_image: "assets/world_dystar.jpg"
 
 axes:
   - key: game_count
