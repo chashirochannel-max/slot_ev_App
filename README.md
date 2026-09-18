@@ -76,3 +76,10 @@ python scripts/process_header_image.py <元画像のパス> <machine_id>
 `<machine_id>` は対象 `profiles/<machine_id>.yaml` の `id` と一致させる。800x400(2:1)に中央クロップ&リサイズされ、`assets/<machine_id>.jpg` に出力されるので、そのパスを `header_image` に設定する。機種ごとに元画像の解像度がバラバラでも、この加工を通せばカードの高さが揃う。
 
 著作権について: 本来は自撮りの筐体写真など著作権的に問題のない画像を推奨するが、2026年9月時点では光さんの判断で、パスワード保護された個人利用アプリという前提のもと、メーカー公式のプロモーション画像(版権表記入り)も使用している。第三者に配布・公開する場合は改めて権利関係を確認すること。
+
+## トラブル時
+
+| 症状 | 原因 | 対処 |
+|---|---|---|
+| アプリを開くと「Oh no. Error running app.」と出る(PC・iPhone問わず) | コードのバグではなく、**Streamlit CloudのGitHub連携が切れている**ことが多い(2026-09-18に発生。原因不明・GitHub側で失効していた)。「Manage app」のログに`Failed to download the sources for repository`と出ていれば確定 | 1. share.streamlit.io にログイン → 右上メニュー→ Settings → **Linked accounts**<br>2. 「Streamlit does not have access to private repos on this GitHub account」の**「Connect here」**をクリック<br>3. GitHubの認証画面で「Public and private」への許可を求められるので **Authorize**<br>4. 元のアプリの「Manage app」→ **Reboot app** |
+| 上記の確認方法 | - | 「Manage app」ボタン(画面右下の赤いボタン)を押すとログが見られる。`Failed to download the sources`とあればリポジトリ接続の問題 |
