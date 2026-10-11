@@ -3,5 +3,7 @@ __pycache__/
 *.pyc
 .streamlit/secrets.toml
 *.json
-.claude/
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
 assets/png/
