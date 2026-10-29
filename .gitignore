@@ -5,3 +5,6 @@ __pycache__/
 *.json
 .claude/
 assets/png/
+# 更新チェック(scripts/check_updates.py)
+reports/
+!data/update_state.json

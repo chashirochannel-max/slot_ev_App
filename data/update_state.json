@@ -1,0 +1,41 @@
+{
+  "note": "scripts/check_updates.py が管理。個人情報は含まない。",
+  "seen_tenjo": {
+    "https://slot-toolbox.com/ao-buta-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/bakemonogatari-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/jormungand-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/juoh-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/kabaneri-unato-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/kanokari-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/karakuri-circus2-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/lycoris-recoil-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/mahoako-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/mhrsb-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/monkey-turn5-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/paripi-koumei-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/sao2-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/sengoku-collection6-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/sengoku-otome5-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/tenseioujo-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/toaru-index2-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/tokyo-ghoul-tenjo/": "2026-10-29",
+    "https://slot-toolbox.com/world-dai-star-tenjo/": "2026-10-29"
+  },
+  "source_lastmod": {
+    "https://slot-toolbox.com/ao-buta-tenjo/": "2026-10-24T18:18:51+00:00",
+    "https://slot-toolbox.com/bakemonogatari-tenjo/": "2026-10-12T01:51:45+00:00",
+    "https://slot-toolbox.com/juoh-tenjo/": "2026-10-25T20:47:20+00:00",
+    "https://slot-toolbox.com/kabaneri-unato-tenjo/": "2026-10-12T01:52:44+00:00",
+    "https://slot-toolbox.com/karakuri-circus2-tenjo/": "2026-10-12T01:52:56+00:00",
+    "https://slot-toolbox.com/mahoako-tenjo/": "2026-10-26T09:25:56+00:00",
+    "https://slot-toolbox.com/mhrsb-tenjo/": "2026-10-25T07:02:19+00:00",
+    "https://slot-toolbox.com/paripi-koumei-tenjo/": "2026-10-26T01:48:45+00:00",
+    "https://slot-toolbox.com/sengoku-otome5-tenjo/": "2026-10-12T01:53:43+00:00",
+    "https://slot-toolbox.com/tenseioujo-tenjo/": "2026-10-23T19:13:41+00:00",
+    "https://slot-toolbox.com/toaru-index2-tenjo/": "2026-10-26T03:12:46+00:00",
+    "https://slot-toolbox.com/tokyo-ghoul-tenjo/": "2026-10-12T01:54:05+00:00",
+    "https://slot-toolbox.com/world-dai-star-tenjo/": "2026-10-12T01:54:22+00:00"
+  },
+  "updated_at": "2026-10-29T11:19:05+09:00",
+  "version": 1
+}
