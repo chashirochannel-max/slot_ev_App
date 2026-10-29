@@ -111,7 +111,7 @@ ev_policy_note: >
   下がることがあります。本プロファイルのテーブル(50G刻みの滑らかな曲線)は
   この落ち込みを完全には表現できていない可能性があるため、250〜350G付近の
   数値は特に額面通り信頼しすぎないでください。
-header_image: "assets/fire_force2.jpg"
+header_image: "assets/badges_mascot/fire_force2.jpg"  # 自作マスコット「おもち」版(2026-10-29 光さん決定で全機種統一)
 
 axes:
   - key: current_game_count

@@ -122,7 +122,7 @@ ev_policy_note: >
   事実のため、円換算期待値とは別に「周期天井到達」を独立した続行推奨条件として
   判定しています。皮膜Lv・サブ液晶背景・黒煙ポイント・輪廻くじ・景之STループ
   等の示唆による上振れも金額には反映されていません。
-header_image: "assets/kabaneri_kaimon_kessen.jpg"
+header_image: "assets/badges_mascot/kabaneri_kaimon_kessen.jpg"  # 自作マスコット「おもち」版(2026-10-29 光さん決定で全機種統一)
 
 axes:
   - key: current_game_count

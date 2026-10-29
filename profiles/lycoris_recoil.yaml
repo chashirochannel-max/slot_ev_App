@@ -39,7 +39,7 @@
 id: lycoris_recoil
 name: "スマスロ リコリス・リコイル"
 summary: "AT間天井(通常850G/短縮600G/250G)・CZ間天井(通常600G/短縮250G)の2系統。導入直後で期待値データ未公開、天井到達ベースの判定。"
-header_image: null  # assets/配下に画像を置いたらここにパスを書く
+header_image: "assets/badges_mascot/lycoris_recoil.jpg"  # 自作マスコット「おもち」版(2026-10-29 光さん決定で全機種統一)
 
 axes:
   - key: ceiling_mode

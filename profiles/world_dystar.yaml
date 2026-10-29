@@ -91,7 +91,7 @@ ev_policy_note: >
   600G+α短縮天井を基準に次回ボーナスまで続行するのが基本とされており、
   short_ceiling_active(短縮天井)を選んだ場合はこちらの「続行が基本」という
   前提で読んでください。示唆演出による上振れは金額には反映されていません。
-header_image: "assets/world_dystar.jpg"
+header_image: "assets/badges_mascot/world_dystar.jpg"  # 自作マスコット「おもち」版(2026-10-29 光さん決定で全機種統一)
 
 axes:
   - key: game_count

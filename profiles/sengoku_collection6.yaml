@@ -70,7 +70,7 @@ ev_policy_note: >
   枚数が120枚以下だった場合は次回AT当選まで継続する特殊高確率モードの
   可能性(約50%)があるため即ヤメを避けるべきとされています。これらの示唆に
   よる上振れは期待値の金額には反映されていません。
-header_image: null
+header_image: "assets/badges_mascot/sengoku_collection6.jpg"  # 自作マスコット「おもち」版(2026-10-29 光さん決定で全機種統一)
 
 axes:
   - key: current_game_count

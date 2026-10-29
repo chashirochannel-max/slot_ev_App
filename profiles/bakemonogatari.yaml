@@ -81,7 +81,7 @@ ev_policy_note: >
   CZ抽選によるゲーム数ごとの偏り、設定変更後51〜100GのHIGH固有価値、AT獲得枚数の
   引き継ぎ、閉店による欠損は金額に反映されていません。これらの状況が確認できた
   場合は、表の数値より有利・不利にブレる可能性があります。
-header_image: null  # assets/配下に画像を置いたらここにパスを書く(例: "assets/bakemonogatari.jpg")
+header_image: "assets/badges_mascot/bakemonogatari.jpg"  # 自作マスコット「おもち」版(2026-10-29 光さん決定で全機種統一)
 
 axes:
   - key: current_game_count

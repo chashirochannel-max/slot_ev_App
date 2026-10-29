@@ -38,7 +38,7 @@
 id: kanojo_okarishimasu
 name: "スマスロ 彼女、お借りします"
 summary: "直前状態で天井G数が変化(かのかりBONUS後1000G+α/REGULAR BONUS後800G+α/設定変更後600G+α)。導入直後で期待値データ未公開。"
-header_image: null
+header_image: "assets/badges_mascot/kanojo_okarishimasu.jpg"  # 自作マスコット「おもち」版(2026-10-29 光さん決定で全機種統一)
 
 axes:
   - key: current_game_count

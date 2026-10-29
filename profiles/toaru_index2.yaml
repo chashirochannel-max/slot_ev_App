@@ -23,7 +23,7 @@ ev_policy_note: >
   ラストオーダー・アイキャッチ等のモード示唆による上振れは、出典サイトが
   「期待値表の金額へ加算していない」と明記しているため反映されていません。
   これらの示唆がある場合は表の数値より有利と見てよい、とされています。
-header_image: "assets/toaru_index2.jpg"
+header_image: "assets/badges_mascot/toaru_index2.jpg"  # 自作マスコット「おもち」版(2026-10-29 光さん決定で全機種統一)
 
 axes:
   - key: current_game_count

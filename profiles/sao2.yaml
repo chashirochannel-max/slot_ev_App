@@ -88,7 +88,7 @@ ev_policy_note: >
   ため、50G消化後のヤメを推奨」とも明記されており、この表よりも50Gだけ
   長く粘った方が実際には有利な可能性があります(サイト内でも算出条件と
   実戦アドバイスが完全には一致していない点として認識しておくこと)。
-header_image: null  # assets/配下に画像を置いたらここにパスを書く(例: "assets/sao2.jpg")
+header_image: "assets/badges_mascot/sao2.jpg"  # 自作マスコット「おもち」版(2026-10-29 光さん決定で全機種統一)
 
 axes:
   - key: current_real_game_count

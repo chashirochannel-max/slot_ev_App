@@ -87,7 +87,7 @@ ev_policy_note: >
   設定変更後のみ200G+αに短縮されますが、AT間天井は設定変更の影響を受けず常に
   1200G+αです。モード示唆(通常A/B/C・チャンス・天国準備・天国)による上振れは
   金額に反映されていません。
-header_image: null  # assets/配下に画像を置いたらここにパスを書く(例: "assets/tokyo_ghoul.jpg")
+header_image: "assets/badges_mascot/tokyo_ghoul.jpg"  # 自作マスコット「おもち」版(2026-10-29 光さん決定で全機種統一)
 
 axes:
   - key: current_game_count

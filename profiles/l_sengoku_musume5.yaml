@@ -163,7 +163,7 @@ ev_policy_note: >
   周期内Gの進み方を実Gの1.5倍と仮定した粗い近似モデルで、AT間実G基準の
   期待値とは前提が異なるため単純に合算できません(出典サイトも明記)。
   1〜4周期目のみのデータで、5〜6周期目は数値化されていません。
-header_image: "assets/l_sengoku_musume5.jpg"  # 光さんが用意したメーカー公式画像。scripts/process_header_image.pyで800x400に加工済み
+header_image: "assets/badges_mascot/l_sengoku_musume5.jpg"  # 自作マスコット「おもち」版(2026-10-29 光さん決定で全機種統一)
 
 axes:
   - key: current_game_count

@@ -65,17 +65,47 @@ git push -u origin main
 
 ## ヘッダー画像について
 
-機種選択画面・判定画面の上部に画像を出したい場合、`assets/` フォルダに画像ファイルを置き、該当する `profiles/*.yaml` の `header_image` に相対パス(例: `assets/monkey_turn_v.jpg`)を設定する。
+機種選択画面・判定画面の上に出る画像は、「その台が何の台か一目でわかる目印」のためのもの。正確な絵である必要はないので、**基本は自作のバッジ画像を使う**。
 
-**画像は必ず `scripts/process_header_image.py` に通してから `assets/` へ置くこと(全機種共通サイズにするため)。**
+### 基本:自作バッジ(著作権の心配なし)
 
-```
-python scripts/process_header_image.py <元画像のパス> <machine_id>
-```
+`scripts/make_badge.py` が、色・短い機種名・単純な図形(波、炎、星など)だけでバッジを作る。キャラクター・ロゴ・公式画像は一切使っていないので、著作権の心配がない。
 
-`<machine_id>` は対象 `profiles/<machine_id>.yaml` の `id` と一致させる。800x400(2:1)に中央クロップ&リサイズされ、`assets/<machine_id>.jpg` に出力されるので、そのパスを `header_image` に設定する。機種ごとに元画像の解像度がバラバラでも、この加工を通せばカードの高さが揃う。
+1. このフォルダでコマンドを開き、次のどちらかを実行する
+   - 1機種だけ作る: `python scripts/make_badge.py <machine_id>`(例: `python scripts/make_badge.py sao2`)
+   - 全機種まとめて作る: `python scripts/make_badge.py --all`
+2. `assets/badges/<machine_id>.jpg`(800x400)ができる
+3. `profiles/<machine_id>.yaml` の `header_image` の行を、次のように書きかえる
+   ```yaml
+   header_image: "assets/badges/<machine_id>.jpg"
+   ```
 
-著作権について: 本来は自撮りの筐体写真など著作権的に問題のない画像を推奨するが、2026年9月時点では光さんの判断で、パスワード保護された個人利用アプリという前提のもと、メーカー公式のプロモーション画像(版権表記入り)も使用している。第三者に配布・公開する場合は改めて権利関係を確認すること。
+**色・短い名前・図形を変えたいとき**は、`scripts/make_badge.py` の上の方にある `BADGES` という表を書きかえて、もう一度実行する。
+
+- `short`: 大きく出す名前。`
+` を入れると2行になる(例: `"リコリス
+リコイル"`)
+- `colors`: 背景の (上の色, 下の色)
+- `accent`: 図形とラベルの色
+- `motif`: 図形の種類(boat, flame, moon, train, stage など。表の下の `MOTIFS` に一覧がある)
+
+**マスコット版**: `python scripts/make_badge.py --all --style mascot` で、このアプリ専用のオリジナルマスコット「おもち」が機種ごとの小物(ヘルメット、刀、花束など)を持ったバッジが `assets/badges_mascot/<machine_id>.jpg` にできる。使うときは `header_image` を `"assets/badges_mascot/<machine_id>.jpg"` にする。小物・向き・大きさは `make_badge.py` の `MASCOTS` 表で変えられる。作品のキャラクターに似せた絵(デフォルメ・ちび化を含む)は著作権の問題になるので描かない。
+
+表に無い新しい機種は、名前から自動で色を決めた汎用デザインになる(そのままでも使える)。左上の「スマスロ」「Lパチスロ」のラベルは、YAMLの `name` の先頭から自動で決まる。
+
+### 公式画像を使っている機種(6機種)を自作バッジに切りかえる方法
+
+fire_force2 / kabaneri_kaimon_kessen / l_sengoku_musume5 / monkey_turn_v / toaru_index2 / world_dystar は、今はメーカー公式画像(`assets/<machine_id>.jpg`)を使っている。バッジもすでに `assets/badges/` に作ってあるので、切りかえるなら:
+
+1. `profiles/<machine_id>.yaml` を開く
+2. `header_image: "assets/<machine_id>.jpg"` の行を `header_image: "assets/badges/<machine_id>.jpg"` に書きかえる(1行だけ)
+3. 元にもどしたいときは、その行をもとの文字に戻す(公式画像のファイルは消していない)
+
+### 公式画像を使う場合の注意
+
+- メーカーの画像には著作権がある。今はパスワード付きの個人利用アプリという前提で、光さんの判断で一部に使っている
+- **ほかの人に配ったり、パスワードなしで公開したりするなら、公式画像はやめて自作バッジにする**
+- 公式画像を新しく入れるときは、必ず `python scripts/process_header_image.py <元画像のパス> <machine_id>` に通して800x400にそろえる(機種ごとにカードの高さがバラバラにならないように)。出力は `assets/<machine_id>.jpg`
 
 ## トラブル時
 

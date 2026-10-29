@@ -89,7 +89,7 @@ ev_policy_note: >
   こちらは等価交換のみのデータで、かつ液晶・女神間・AT間の3天井の期待値とは
   合算できない別モデルのため、続行推奨/様子見/見送りの判定には反映されません。
   該当する状況を確認できた場合は、この参考値も踏まえて光さん自身で判断してください。
-header_image: null  # assets/配下に画像を置いたらここにパスを書く(例: "assets/karakuri_circus2.jpg")
+header_image: "assets/badges_mascot/karakuri_circus2.jpg"  # 自作マスコット「おもち」版(2026-10-29 光さん決定で全機種統一)
 
 axes:
   - key: lcd_game_count
