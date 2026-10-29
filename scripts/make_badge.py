@@ -109,6 +109,30 @@ BADGES: dict[str, dict] = {
         "short": "ワールド\nダイスター",
         "colors": ("#5a2a8a", "#1a0a33"), "accent": "#ffe27a", "motif": "stage",
     },
+    "mahoako": {
+        "short": "まほあこ",
+        "colors": ("#b0478a", "#3a0f33"), "accent": "#ffd1f0", "motif": "petals",
+    },
+    "juoh": {
+        "short": "獣王",
+        "colors": ("#c27a1c", "#3d2306"), "accent": "#ffe08a", "motif": "generic",
+    },
+    "paripi_koumei": {
+        "short": "パリピ孔明",
+        "colors": ("#1c6b8a", "#081f2e"), "accent": "#7ff0ff", "motif": "stage",
+    },
+    "mhrsb": {
+        "short": "モンハン\nサンブレイク",
+        "colors": ("#2f5a3a", "#0e1c12"), "accent": "#e8b04a", "motif": "flame",
+    },
+    "tenseioujo": {
+        "short": "転生王女",
+        "colors": ("#3a5cb0", "#101a3d"), "accent": "#ffd98a", "motif": "magic_circle",
+    },
+    "aobuta": {
+        "short": "青ブタ",
+        "colors": ("#3a7bd5", "#0f2347"), "accent": "#cfe6ff", "motif": "moon",
+    },
 }
 
 # 正式名の先頭にある種別。長い順に判定する
@@ -571,6 +595,18 @@ MASCOTS: dict[str, dict] = {
                     "look": "up", "props": ["scarf"]},
     "world_dystar": {"short": "ワールド\nダイスター", "side": "right", "scale": 0.9, "tilt": -8,
                      "look": "front", "props": ["bow", "mic"]},
+    "mahoako": {"short": "まほあこ", "side": "left", "scale": 0.9, "tilt": 6,
+                "look": "front", "props": ["bow", "wand"]},
+    "juoh": {"short": "獣王", "side": "right", "scale": 1.0, "tilt": -4,
+             "look": "side", "props": ["crown"]},
+    "paripi_koumei": {"short": "パリピ\n孔明", "side": "left", "scale": 0.9, "tilt": -6,
+                      "look": "front", "props": ["feather_fan"]},
+    "mhrsb": {"short": "モンハン\nサンブレイク", "side": "right", "scale": 0.95, "tilt": 8,
+              "look": "side", "props": ["race_helmet", "sword"]},
+    "tenseioujo": {"short": "転生王女", "side": "left", "scale": 0.9, "tilt": 0,
+                   "look": "up", "props": ["crown", "wand"]},
+    "aobuta": {"short": "青ブタ", "side": "right", "scale": 0.9, "tilt": -6,
+               "look": "front", "props": ["bunny_ears"]},
 }
 
 # 体の後ろに描く小物(体より先に描く)
@@ -759,7 +795,46 @@ def p_mic(d, ox, oy, a, b, c, lw):
         d.polygon(_star(ox + a * sx, oy + b * sy, a * rr * 1.5), fill=c)
 
 
+def p_wand(d, ox, oy, a, b, c, lw):
+    # 先に星がついた細い杖(汎用の魔法の杖)
+    d.line([(ox + a * 0.75, oy + b * 0.4), (ox + a * 1.45, oy - b * 0.95)], fill="#8b5a2b", width=lw * 3)
+    d.polygon(_star(ox + a * 1.5, oy - b * 1.05, a * 0.26), fill=c, outline=MOCHI_LINE, width=lw)
+
+
+def p_crown(d, ox, oy, a, b, c, lw):
+    # ぎざぎざ3山の単純な王冠
+    y0, y1 = oy - b * 0.78, oy - b * 1.35
+    pts = [(ox - a * 0.55, y0), (ox - a * 0.6, y1), (ox - a * 0.3, oy - b * 1.05), (ox, y1 - b * 0.1),
+           (ox + a * 0.3, oy - b * 1.05), (ox + a * 0.6, y1), (ox + a * 0.55, y0)]
+    d.polygon(pts, fill="#f2c14e", outline=MOCHI_LINE, width=lw)
+    r = a * 0.07
+    for dx in (-0.6, 0.0, 0.6):
+        yy = y1 - (b * 0.1 if dx == 0.0 else 0)
+        d.ellipse([ox + a * dx - r, yy - r, ox + a * dx + r, yy + r], fill=c, outline=MOCHI_LINE, width=lw)
+
+
+def p_feather_fan(d, ox, oy, a, b, c, lw):
+    # 羽根うちわ(扇形+持ち手)
+    hx, hy = ox + a * 0.85, oy + b * 0.35
+    d.line([(hx, hy), (hx + a * 0.3, hy - b * 0.55)], fill="#6b4a2a", width=lw * 3)
+    fx, fy = hx + a * 0.3, hy - b * 0.55
+    d.pieslice([fx - a * 0.6, fy - b * 1.2, fx + a * 0.6, fy + b * 0.3], 200, 340, fill="#ffffff", outline=MOCHI_LINE, width=lw)
+    for k in range(5):
+        ang = math.radians(205 + k * 32.5)
+        d.line([(fx, fy), (fx + math.cos(ang) * a * 0.55, fy + math.sin(ang) * b * 0.7)], fill=c, width=lw)
+
+
+def p_bunny_ears(d, ox, oy, a, b, c, lw):
+    # カチューシャのうさ耳(汎用の仮装小物)
+    d.arc([ox - a * 0.8, oy - b * 1.05, ox + a * 0.8, oy - b * 0.45], 200, 340, fill="#333333", width=lw * 3)
+    for sx, rot in ((-1, -12), (1, 12)):
+        cx = ox + sx * a * 0.32
+        d.ellipse([cx - a * 0.16, oy - b * 1.85, cx + a * 0.16, oy - b * 0.85], fill="#333333", outline=MOCHI_LINE, width=lw)
+        d.ellipse([cx - a * 0.08, oy - b * 1.7, cx + a * 0.08, oy - b * 1.0], fill=c)
+
+
 PROPS = {
+    "wand": p_wand, "crown": p_crown, "feather_fan": p_feather_fan, "bunny_ears": p_bunny_ears,
     "race_helmet": p_race_helmet, "boat": p_boat, "fire_helmet": p_fire_helmet, "hose": p_hose,
     "conductor_cap": p_conductor_cap, "steam": p_steam, "kabuto": p_kabuto, "sword": p_sword,
     "banner": p_banner, "nightcap": p_nightcap, "fedora": p_fedora, "suitcase": p_suitcase,
